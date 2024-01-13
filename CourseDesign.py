@@ -26,6 +26,7 @@ books_att = {
     "STATE": "状态",
     "RNO": "借阅读者号"
 }
+books_att_r = {v: k for k, v in books_att.items()}
 
 manager_att = {
     "WNO": "工号",
@@ -36,6 +37,7 @@ manager_att = {
     "WTEL": "电话",
     "UNM": "用户名"
 }
+manager_att_r = {v: k for k, v in manager_att.items()}
 
 reader_att = {
     "RNO": "读者号",
@@ -47,6 +49,7 @@ reader_att = {
     "BD": "已借本数",
     "LIM": "限借本数"
 }
+reader_att_r = {v: k for k, v in reader_att.items()}
 
 shell_att = {
     "CNO": "书架号",
@@ -54,6 +57,7 @@ shell_att = {
     "KIND": "分类",
     "WNO": "管理员工号"
 }
+shell_att_r = {v: k for k, v in shell_att.items()}
 
 
 class MySQL:
