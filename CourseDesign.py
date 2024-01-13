@@ -3,8 +3,7 @@ from PyQt5.QtWidgets import (QDialog, QLabel, QCheckBox, QHBoxLayout,
                              QVBoxLayout, QApplication, QWidget, QFrame,
                              QMainWindow, QMessageBox, QTableWidgetItem,
                              QScrollArea, QTextEdit, QAction, QMenu,
-                             QFileDialog)
-from PyQt5 import QtWidgets
+                             QFileDialog, QComboBox, QAbstractItemView)
 from PyQt5.QtCore import Qt, QDateTime, QSize, QRect, QUrl
 from PyQt5.QtGui import (QPixmap, QColor, QPalette, QFont,
                          QMovie, QMouseEvent, QCursor, QDesktopServices)
@@ -25,7 +24,7 @@ books_att = {
     "PRICE": "定价",
     "CNO": "存放书架号",
     "STATE": "状态",
-    "RNO": "节阅读者号"
+    "RNO": "借阅读者号"
 }
 
 manager_att = {
@@ -185,23 +184,90 @@ class BookManagementWindow(QDialog):
         self.result_textbox.setRowCount(0)
         self.result_textbox.setColumnCount(0)
 
-        self.label_input = QLabel("关键字查询:", self)
+        self.label_input = QLabel("请输入关键文字:", self)
         self.label_input.setGeometry(2, 601, 198, 30)
-        self.input_textbox = QLineEdit("请输入关键字:", self)
+        self.input_textbox = QLineEdit(self)
         self.input_textbox.setGeometry(2, 632, 198, 30)
 
+        self.label_sort_order_combo = QLabel("排序:", self)
+        self.label_sort_order_combo.setGeometry(202, 601, 40, 30)
+        self.sort_order_combo = QComboBox(self)
+        self.sort_order_combo.addItem("升序")
+        self.sort_order_combo.addItem("降序")
+        self.sort_order_combo.setGeometry(202, 632, 60, 30)
+
+        self.label_sort_property_combo = QLabel("排序属性:", self)
+        self.label_sort_property_combo.setGeometry(264, 601, 110, 30)
+        self.sort_property_combo = QComboBox(self)
+        self.sort_property_combo.addItem("馆藏号")
+        self.sort_property_combo.addItem("书号")
+        self.sort_property_combo.addItem("书名")
+        self.sort_property_combo.addItem("作者")
+        self.sort_property_combo.addItem("出版社")
+        self.sort_property_combo.addItem("定价")
+        self.sort_property_combo.addItem("存放书架号")
+        self.sort_property_combo.addItem("状态")
+        self.sort_property_combo.addItem("借阅读者号")
+        self.sort_property_combo.setGeometry(264, 632, 110, 30)
+
+        self.match_type_combo = QLabel("正则匹配:", self)
+        self.match_type_combo.setGeometry(376, 601, 100, 30)
+        self.match_type_combo = QComboBox(self)
+        self.match_type_combo.addItem("相关匹配")
+        self.match_type_combo.addItem("前字匹配")
+        self.match_type_combo.addItem("后字匹配")
+        self.match_type_combo.addItem("绝对匹配")
+        self.match_type_combo.setGeometry(376, 632, 100, 30)
+
+        self.regex_property_combo = QLabel("匹配属性:", self)
+        self.regex_property_combo.setGeometry(478, 601, 110, 30)
+        self.regex_property_combo = QComboBox(self)
+        self.regex_property_combo.addItem("书名")
+        self.regex_property_combo.addItem("馆藏号")
+        self.regex_property_combo.addItem("书号")
+        self.regex_property_combo.addItem("作者")
+        self.regex_property_combo.addItem("出版社")
+        self.regex_property_combo.addItem("定价")
+        self.regex_property_combo.addItem("存放书架号")
+        self.regex_property_combo.addItem("状态")
+        self.regex_property_combo.addItem("借阅读者号")
+        self.regex_property_combo.setGeometry(478, 632, 110, 30)
+
+        self.query_button = QLabel("点击查询:", self)
+        self.query_button.setGeometry(592, 601, 70, 30)
         self.query_button = QPushButton("查询", self)
         self.query_button.setCursor(Qt.PointingHandCursor)
-        self.query_button.setGeometry(200, 601, 40, 30)
+        self.query_button.setGeometry(592, 632, 70, 30)
         self.query_button.clicked.connect(self.handle_query)
 
-        self.move(0, 0)
+        self.add_button = QLabel("点击增加:", self)
+        self.add_button.setGeometry(666, 601, 70, 30)
+        self.add_button = QPushButton("增加", self)
+        self.add_button.setCursor(Qt.PointingHandCursor)
+        self.add_button.setGeometry(666, 632, 70, 30)
+        self.add_button.clicked.connect(self.handle_query)
+
+        self.change_button = QLabel("点击修改:", self)
+        self.change_button.setGeometry(740, 601, 70, 30)
+        self.change_button = QPushButton("修改", self)
+        self.change_button.setCursor(Qt.PointingHandCursor)
+        self.change_button.setGeometry(740, 632, 70, 30)
+        self.change_button.clicked.connect(self.handle_query)
+
+        self.delete_button = QLabel("点击删除:", self)
+        self.delete_button.setGeometry(814, 601, 70, 30)
+        self.delete_button = QPushButton("删除", self)
+        self.delete_button.setCursor(Qt.PointingHandCursor)
+        self.delete_button.setGeometry(814, 632, 70, 30)
+        self.delete_button.clicked.connect(self.handle_query)
+
+        self.handle_query()
 
     def handle_query(self):
         # query_text = self.input_textbox.text()
         # result = (db_connection.execute_query("SELECT * FROM reader WHERE\
         #     RNO LIKE '{}%'".format(query_text)))
-        result = (db_connection.execute_query("SELECT * FROM reader"))
+        result = (db_connection.execute_query("SELECT * FROM books"))
         # 设置表格的行数和列数
         self.result_textbox.clearContents()
         if result:
@@ -211,7 +277,7 @@ class BookManagementWindow(QDialog):
             # 设置列属性名
             column_names = [desc[0] for desc in db_connection.cursor
                             .description]
-            column_names = [reader_att[desc] for desc in column_names]
+            column_names = [books_att[desc] for desc in column_names]
             self.result_textbox.setHorizontalHeaderLabels(column_names)
 
             # 填充表格数据
@@ -220,8 +286,7 @@ class BookManagementWindow(QDialog):
                     table_item = QTableWidgetItem(str(item))
                     self.result_textbox.setItem(i, j, table_item)
 
-            self.result_textbox.setEditTriggers(QtWidgets
-                                                .QAbstractItemView
+            self.result_textbox.setEditTriggers(QAbstractItemView
                                                 .NoEditTriggers)
             self.result_textbox.resizeColumnsToContents()
             self.result_textbox.resizeRowsToContents()
@@ -231,14 +296,14 @@ class ShelfManagementWindow(QDialog):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("书架管理")
-        self.setGeometry(0, 30, 520, 480)
+        self.setGeometry(0, 0, 888, 690)
 
 
 class ReaderManagementWindow(QDialog):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("读者管理")
-        self.setGeometry(0, 30, 520, 480)
+        self.setGeometry(0, 0, 888, 690)
 
 
 class HelpDialog(QDialog):
@@ -510,59 +575,81 @@ class MainWindow(QMainWindow):
         self.toolbar.addSeparator()
 
         # 创建“图书管理”按钮
-        button_book = QToolButton(self)
-        button_book.setCursor(Qt.PointingHandCursor)
-        button_book.setText("图书管理")
-        button_book.clicked.connect(self.show_book_management_window)
-        self.toolbar.addWidget(button_book)
+        self.button_book = QToolButton(self)
+        self.button_book.setCursor(Qt.PointingHandCursor)
+        self.button_book.setText("图书管理")
+        self.button_book.clicked.connect(self.show_book_management_window)
+        self.toolbar.addWidget(self.button_book)
 
         self.toolbar.addSeparator()
         self.toolbar.addSeparator()
 
         # 创建“书架管理”按钮
-        button_shelf = QToolButton(self)
-        button_shelf.setCursor(Qt.PointingHandCursor)
-        button_shelf.setText("书架管理")
-        button_shelf.clicked.connect(self.show_shelf_management_window)
-        self.toolbar.addWidget(button_shelf)
+        self.button_shelf = QToolButton(self)
+        self.button_shelf.setCursor(Qt.PointingHandCursor)
+        self.button_shelf.setText("书架管理")
+        self.button_shelf.clicked.connect(self.show_shelf_management_window)
+        self.toolbar.addWidget(self.button_shelf)
 
         self.toolbar.addSeparator()
         self.toolbar.addSeparator()
 
         # 创建“读者管理”按钮
-        button_reader = QToolButton(self)
-        button_reader.setCursor(Qt.PointingHandCursor)
-        button_reader.setText("读者管理")
-        button_reader.clicked.connect(self.show_reader_management_window)
-        self.toolbar.addWidget(button_reader)
+        self.button_reader = QToolButton(self)
+        self.button_reader.setCursor(Qt.PointingHandCursor)
+        self.button_reader.setText("读者管理")
+        self.button_reader.clicked.connect(self.show_reader_management_window)
+        self.toolbar.addWidget(self.button_reader)
 
         self.toolbar.addSeparator()
-
-        # 设置按钮文本加粗
-        self.set_button_text_bold(button_book)
-        self.set_button_text_bold(button_shelf)
-        self.set_button_text_bold(button_reader)
 
     def set_button_text_bold(self, button):
         button.setStyleSheet("QToolButton { font-weight: bold; }")
 
+    def set_button_normal(self, button):
+        button.setStyleSheet("QToolButton { font-weight: normal; }")
+
     def show_book_management_window(self):
-        self.image_label_main.hide()
-        book_window = BookManagementWindow()
-        book_window.setParent(self.container)  # 将子窗口设置为容器部件的子部件
-        book_window.show()
+        if self.button_book.font().weight() != QFont.Bold:
+            self.image_label_main.hide()
+            if hasattr(self, "shelf_window"):
+                self.shelf_window.hide()
+            if hasattr(self, "reader_window"):
+                self.reader_window.hide()
+            self.set_button_normal(self.button_shelf)
+            self.set_button_normal(self.button_reader)
+            self.set_button_text_bold(self.button_book)
+            self.book_window = BookManagementWindow()
+            self.book_window.setParent(self.container)  # 将子窗口设置为容器部件的子部件
+            self.book_window.show()
 
     def show_shelf_management_window(self):
-        self.image_label_main.hide()
-        shelf_window = ShelfManagementWindow()
-        shelf_window.setParent(self.container)  # 将子窗口设置为容器部件的子部件
-        shelf_window.show()
+        if self.button_shelf.font().weight() != QFont.Bold:
+            self.image_label_main.hide()
+            if hasattr(self, "book_window"):
+                self.book_window.hide()
+            if hasattr(self, "reader_window"):
+                self.reader_window.hide()
+            self.set_button_normal(self.button_book)
+            self.set_button_normal(self.button_reader)
+            self.set_button_text_bold(self.button_shelf)
+            self.shelf_window = ShelfManagementWindow()
+            self.shelf_window.setParent(self.container)  # 将子窗口设置为容器部件的子部件
+            self.shelf_window.show()
 
     def show_reader_management_window(self):
-        self.image_label_main.hide()
-        reader_window = ReaderManagementWindow()
-        reader_window.setParent(self.container)  # 将子窗口设置为容器部件的子部件
-        reader_window.show()
+        if self.button_reader.font().weight() != QFont.Bold:
+            self.image_label_main.hide()
+            if hasattr(self, "book_window"):
+                self.book_window.hide()
+            if hasattr(self, "shelf_window"):
+                self.shelf_window.hide()
+            self.set_button_normal(self.button_book)
+            self.set_button_normal(self.button_shelf)
+            self.set_button_text_bold(self.button_reader)
+            self.reader_window = ReaderManagementWindow()
+            self.reader_window.setParent(self.container)  # 将子窗口设置为容器部件的子部件
+            self.reader_window.show()
 
     def create_help_button(self):
         # 创建帮助信息按钮
