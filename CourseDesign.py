@@ -2,7 +2,8 @@ from PyQt5.QtWidgets import (QDialog, QLabel, QCheckBox, QHBoxLayout,
                              QLineEdit, QPushButton, QToolButton, QTableWidget,
                              QVBoxLayout, QApplication, QWidget, QFrame,
                              QMainWindow, QMessageBox, QTableWidgetItem,
-                             QScrollArea, QTextEdit, QAction, QMenu)
+                             QScrollArea, QTextEdit, QAction, QMenu,
+                             QFileDialog)
 from PyQt5 import QtWidgets
 from PyQt5.QtCore import Qt, QDateTime, QSize, QRect, QUrl
 from PyQt5.QtGui import (QPixmap, QColor, QPalette, QFont,
@@ -177,7 +178,7 @@ class BookManagementWindow(QDialog):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("图书管理")
-        self.setGeometry(0, 0, 886, 690)
+        self.setGeometry(0, 0, 888, 690)
 
         self.result_textbox = QTableWidget(self)
         self.result_textbox.setGeometry(2, 0, 884, 600)
@@ -193,6 +194,8 @@ class BookManagementWindow(QDialog):
         self.query_button.setCursor(Qt.PointingHandCursor)
         self.query_button.setGeometry(200, 601, 40, 30)
         self.query_button.clicked.connect(self.handle_query)
+
+        self.move(0, 0)
 
     def handle_query(self):
         # query_text = self.input_textbox.text()
@@ -320,7 +323,7 @@ class MainWindow(QMainWindow):
         switch_account_button.setCursor(Qt.PointingHandCursor)
         switch_account_button.setText("切换账号")
         switch_account_button.setStyleSheet("background-color: grey;")
-        switch_account_button.setGeometry(self.width() - 80, 0, 80, 25)
+        switch_account_button.setGeometry(self.width() - 82, 1, 80, 24)
         switch_account_button.clicked.connect(self.handle_switch_account)
 
         # 创建一个QTextEdit用于显示时间
@@ -345,13 +348,13 @@ class MainWindow(QMainWindow):
         self.book_textedit.setGeometry(889, 398, 300, 103)
         self.book_textedit.setContextMenuPolicy(Qt.CustomContextMenu)
         (self.book_textedit.customContextMenuRequested
-         .connect(self.show_context_menu))
+         .connect(self.show_context_menu_rf))
         self.renew_bs()
 
         # 显示主窗口
         self.show()
 
-    def show_context_menu(self, pos):
+    def show_context_menu_rf(self, pos):
         if self.is_in_custom_area(pos):
             menu = QMenu(self)
 
@@ -370,7 +373,7 @@ class MainWindow(QMainWindow):
         if event.button() == Qt.RightButton:
             pos = event.pos()
             if self.is_in_custom_area(pos):
-                self.show_context_menu(pos)
+                self.show_context_menu_rf(pos)
         else:
             super().mousePressEvent(event)
 
@@ -401,15 +404,15 @@ class MainWindow(QMainWindow):
 
     def insert_pt(self):
         # 创建一个 QLabel 控件用于显示图片
-        # self.image_label_main = QLabel(self)
+        self.image_label_main = QLabel(self)
         self.image_label_ms = QLabel(self)
 
         # 加载图片并设置到 QLabel 上
-        # pixmap_main = QPixmap('resource/images/main_win.jpg')
-        # self.image_label_main.setPixmap(pixmap_main)
-        # # 调整 QLabel 的位置和大小
-        # self.image_label_main.setGeometry(2, 27, pixmap_main.width(),
-        #                                   pixmap_main.height())
+        pixmap_main = QPixmap('resource/images/main_win.jpg')
+        self.image_label_main.setPixmap(pixmap_main)
+        # 调整 QLabel 的位置和大小
+        self.image_label_main.setGeometry(2, 27, pixmap_main.width(),
+                                          pixmap_main.height())
 
         pixmap_ms = QPixmap('resource/images/msyql.png')
         pixmap_ms_scaled = pixmap_ms.scaled(294, 168, aspectRatioMode=Qt
@@ -424,14 +427,16 @@ class MainWindow(QMainWindow):
         self.image_label_ms.setAutoFillBackground(True)
         self.image_label_ms.setPalette(palette)
 
-        self.init_ui()
+        self.init_picture()
 
-    def init_ui(self):
+    def init_picture(self):
         # 创建一个QLabel用于显示GIF图像
         self.image_label_ys = QLabel(self)
 
         # 加载GIF图像并创建QMovie对象
-        movie_ys = QMovie('resource/images/8.gif')
+        with open('resource/picture_path.txt', "r") as f:
+            path = f.read()
+        movie_ys = QMovie(path)
         movie_ys.setScaledSize(QSize(294, 294))
 
         # 将QMovie对象与QLabel关联
@@ -442,6 +447,29 @@ class MainWindow(QMainWindow):
         movie_ys.setCacheMode(QMovie.CacheAll)
         movie_ys.setSpeed(100)
         movie_ys.setPaused(False)
+
+        self.image_label_ys.setContextMenuPolicy(Qt.CustomContextMenu)
+        (self.image_label_ys.customContextMenuRequested
+         .connect(self.show_context_menu_cp))
+
+    def show_context_menu_cp(self, pos):
+        menu = QMenu(self)
+        action_change_image = menu.addAction("切换图片")
+        action_change_image.triggered.connect(self.change_image)
+        menu.exec_(self.image_label_ys.mapToGlobal(pos))
+
+    def change_image(self):
+        file_dialog = QFileDialog()
+        file_path, _ = (file_dialog
+                        .getOpenFileName(self, "选择图片", "",
+                                         "Images (*.png *.xpm *.jpg *.gif)"))
+        if file_path:
+            with open('resource/picture_path.txt', 'w') as f:
+                f.write(file_path)
+            movie = QMovie(file_path)
+            movie.setScaledSize(QSize(294, 294))
+            self.image_label_ys.setMovie(movie)
+            movie.start()
 
     def handle_switch_account(self):
         reply = QMessageBox.question(self, '提示', '确定要切换账号吗？',
@@ -476,6 +504,7 @@ class MainWindow(QMainWindow):
     def create_toolbar(self):
         # 创建工具栏
         self.toolbar = self.addToolBar("显示工具栏")
+        self.toolbar.setStyleSheet("color: #8B4513;")
 
         # 分隔符
         self.toolbar.addSeparator()
@@ -518,16 +547,19 @@ class MainWindow(QMainWindow):
         button.setStyleSheet("QToolButton { font-weight: bold; }")
 
     def show_book_management_window(self):
+        self.image_label_main.hide()
         book_window = BookManagementWindow()
         book_window.setParent(self.container)  # 将子窗口设置为容器部件的子部件
         book_window.show()
 
     def show_shelf_management_window(self):
+        self.image_label_main.hide()
         shelf_window = ShelfManagementWindow()
         shelf_window.setParent(self.container)  # 将子窗口设置为容器部件的子部件
         shelf_window.show()
 
     def show_reader_management_window(self):
+        self.image_label_main.hide()
         reader_window = ReaderManagementWindow()
         reader_window.setParent(self.container)  # 将子窗口设置为容器部件的子部件
         reader_window.show()
@@ -539,10 +571,10 @@ class MainWindow(QMainWindow):
         self.help_label.setText(help_text)
         self.help_label.setAlignment(Qt.AlignRight | Qt.AlignBottom)
         self.help_label.setStyleSheet("color: blue; text-decoration:\
-            underline; padding-right: 10px; padding-bottom: 10px;")
+            underline;")
         self.help_label.setCursor(Qt.PointingHandCursor)
         self.help_label.mousePressEvent = self.show_help
-        self.help_label.setGeometry(1136, 663, 60, 40)
+        self.help_label.setGeometry(1152, 659, 32, 30)
 
         # 创建关于按钮
         self.about_label = QLabel(self)
@@ -550,14 +582,21 @@ class MainWindow(QMainWindow):
         self.about_label.setText(about_text)
         self.about_label.setAlignment(Qt.AlignLeft | Qt.AlignBottom)
         self.about_label.setStyleSheet("color: blue; text-decoration:\
-            underline; padding-right: 10px; padding-bottom: 10px;")
+            underline;")
         self.about_label.setCursor(Qt.PointingHandCursor)
         self.about_label.mousePressEvent = self.open_website
-        self.about_label.setGeometry(888, 663, 60, 40)
+        self.about_label.setGeometry(890, 659, 32, 30)
 
     def open_website(self, event):
-        url = QUrl("https://github.com/dashboard")  # 替换为你要跳转的网址
-        QDesktopServices.openUrl(url)
+        reply = QMessageBox.question(self, '提示',
+                                     '源码给出仅供参考学习,是否前往?', QMessageBox
+                                     .Yes | QMessageBox.No, QMessageBox.No)
+        if reply == QMessageBox.Yes:
+            url = QUrl("https://github.com/hlxcg/sql_design")
+            QDesktopServices.openUrl(url)
+            event.accept()
+        else:
+            event.ignore()
 
     def show_help(self, event):
         with open("resource/help.txt", encoding="utf-8") as f:
