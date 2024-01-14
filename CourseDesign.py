@@ -189,19 +189,19 @@ class BookManagementWindow(QDialog):
         self.result_textbox.setColumnCount(0)
 
         self.label_input = QLabel("请输入关键文字:", self)
-        self.label_input.setGeometry(2, 601, 198, 30)
+        self.label_input.setGeometry(2, 601, 138, 30)
         self.input_textbox = QLineEdit(self)
-        self.input_textbox.setGeometry(2, 632, 198, 30)
+        self.input_textbox.setGeometry(2, 632, 138, 30)
 
         self.label_sort_order_combo = QLabel("排序:", self)
-        self.label_sort_order_combo.setGeometry(202, 601, 40, 30)
+        self.label_sort_order_combo.setGeometry(142, 601, 40, 30)
         self.sort_order_combo = QComboBox(self)
         self.sort_order_combo.addItem("升序")
         self.sort_order_combo.addItem("降序")
-        self.sort_order_combo.setGeometry(202, 632, 60, 30)
+        self.sort_order_combo.setGeometry(142, 632, 60, 30)
 
         self.label_sort_property_combo = QLabel("排序属性:", self)
-        self.label_sort_property_combo.setGeometry(264, 601, 110, 30)
+        self.label_sort_property_combo.setGeometry(204, 601, 110, 30)
         self.sort_property_combo = QComboBox(self)
         self.sort_property_combo.addItem("馆藏号")
         self.sort_property_combo.addItem("书号")
@@ -211,19 +211,19 @@ class BookManagementWindow(QDialog):
         self.sort_property_combo.addItem("定价")
         self.sort_property_combo.addItem("存放书架号")
         self.sort_property_combo.addItem("状态")
-        self.sort_property_combo.setGeometry(264, 632, 110, 30)
+        self.sort_property_combo.setGeometry(204, 632, 110, 30)
 
         self.match_type_combo = QLabel("正则匹配:", self)
-        self.match_type_combo.setGeometry(376, 601, 100, 30)
+        self.match_type_combo.setGeometry(316, 601, 100, 30)
         self.match_type_combo = QComboBox(self)
         self.match_type_combo.addItem("相关匹配")
         self.match_type_combo.addItem("前字匹配")
         self.match_type_combo.addItem("后字匹配")
         self.match_type_combo.addItem("绝对匹配")
-        self.match_type_combo.setGeometry(376, 632, 100, 30)
+        self.match_type_combo.setGeometry(316, 632, 100, 30)
 
         self.regex_property_combo = QLabel("匹配属性:", self)
-        self.regex_property_combo.setGeometry(478, 601, 110, 30)
+        self.regex_property_combo.setGeometry(418, 601, 110, 30)
         self.regex_property_combo = QComboBox(self)
         self.regex_property_combo.addItem("书名")
         self.regex_property_combo.addItem("馆藏号")
@@ -233,35 +233,42 @@ class BookManagementWindow(QDialog):
         self.regex_property_combo.addItem("存放书架号")
         self.regex_property_combo.addItem("状态")
         self.regex_property_combo.addItem("借阅读者号")
-        self.regex_property_combo.setGeometry(478, 632, 110, 30)
+        self.regex_property_combo.setGeometry(418, 632, 110, 30)
 
         self.query_button = QLabel("点击查询:", self)
-        self.query_button.setGeometry(592, 601, 70, 30)
+        self.query_button.setGeometry(530, 601, 70, 30)
         self.query_button = QPushButton("查询", self)
         self.query_button.setCursor(Qt.PointingHandCursor)
-        self.query_button.setGeometry(592, 632, 70, 30)
+        self.query_button.setGeometry(530, 632, 70, 30)
         self.query_button.clicked.connect(self.handle_query)
 
         self.add_button = QLabel("点击增加:", self)
-        self.add_button.setGeometry(666, 601, 70, 30)
+        self.add_button.setGeometry(602, 601, 70, 30)
         self.add_button = QPushButton("增加", self)
         self.add_button.setCursor(Qt.PointingHandCursor)
-        self.add_button.setGeometry(666, 632, 70, 30)
+        self.add_button.setGeometry(602, 632, 70, 30)
         self.add_button.clicked.connect(self.handle_query)
 
         self.change_button = QLabel("点击修改:", self)
-        self.change_button.setGeometry(740, 601, 70, 30)
+        self.change_button.setGeometry(674, 601, 70, 30)
         self.change_button = QPushButton("修改", self)
         self.change_button.setCursor(Qt.PointingHandCursor)
-        self.change_button.setGeometry(740, 632, 70, 30)
+        self.change_button.setGeometry(674, 632, 70, 30)
         self.change_button.clicked.connect(self.handle_query)
 
         self.delete_button = QLabel("点击删除:", self)
-        self.delete_button.setGeometry(814, 601, 70, 30)
+        self.delete_button.setGeometry(746, 601, 70, 30)
         self.delete_button = QPushButton("删除", self)
         self.delete_button.setCursor(Qt.PointingHandCursor)
-        self.delete_button.setGeometry(814, 632, 70, 30)
+        self.delete_button.setGeometry(746, 632, 70, 30)
         self.delete_button.clicked.connect(self.handle_query)
+
+        self.borrow_button = QLabel("点击借阅:", self)
+        self.borrow_button.setGeometry(818, 601, 70, 30)
+        self.borrow_button = QPushButton("借阅", self)
+        self.borrow_button.setCursor(Qt.PointingHandCursor)
+        self.borrow_button.setGeometry(818, 632, 70, 30)
+        self.borrow_button.clicked.connect(self.handle_query)
 
         self.handle_query()
 
@@ -300,12 +307,220 @@ class ShelfManagementWindow(QDialog):
         self.setWindowTitle("书架管理")
         self.setGeometry(0, 0, 888, 690)
 
+        self.result_textbox = QTableWidget(self)
+        self.result_textbox.setGeometry(2, 0, 884, 600)
+        self.result_textbox.setRowCount(0)
+        self.result_textbox.setColumnCount(0)
+
+        self.label_input = QLabel("请输入关键文字:", self)
+        self.label_input.setGeometry(2, 601, 198, 30)
+        self.input_textbox = QLineEdit(self)
+        self.input_textbox.setGeometry(2, 632, 198, 30)
+
+        self.label_sort_order_combo = QLabel("排序:", self)
+        self.label_sort_order_combo.setGeometry(202, 601, 40, 30)
+        self.sort_order_combo = QComboBox(self)
+        self.sort_order_combo.addItem("升序")
+        self.sort_order_combo.addItem("降序")
+        self.sort_order_combo.setGeometry(202, 632, 60, 30)
+
+        self.label_sort_property_combo = QLabel("排序属性:", self)
+        self.label_sort_property_combo.setGeometry(264, 601, 110, 30)
+        self.sort_property_combo = QComboBox(self)
+        self.sort_property_combo.addItem("书架号")
+        self.sort_property_combo.addItem("书架名")
+        self.sort_property_combo.addItem("分类")
+        self.sort_property_combo.addItem("管理员工号")
+        self.sort_property_combo.setGeometry(264, 632, 110, 30)
+
+        self.match_type_combo = QLabel("正则匹配:", self)
+        self.match_type_combo.setGeometry(376, 601, 100, 30)
+        self.match_type_combo = QComboBox(self)
+        self.match_type_combo.addItem("相关匹配")
+        self.match_type_combo.addItem("前字匹配")
+        self.match_type_combo.addItem("后字匹配")
+        self.match_type_combo.addItem("绝对匹配")
+        self.match_type_combo.setGeometry(376, 632, 100, 30)
+
+        self.regex_property_combo = QLabel("匹配属性:", self)
+        self.regex_property_combo.setGeometry(478, 601, 110, 30)
+        self.regex_property_combo = QComboBox(self)
+        self.regex_property_combo.addItem("分类")
+        self.regex_property_combo.addItem("书架号")
+        self.regex_property_combo.addItem("书架名")
+        self.regex_property_combo.addItem("管理员工号")
+        self.regex_property_combo.setGeometry(478, 632, 110, 30)
+
+        self.query_button = QLabel("点击查询:", self)
+        self.query_button.setGeometry(592, 601, 70, 30)
+        self.query_button = QPushButton("查询", self)
+        self.query_button.setCursor(Qt.PointingHandCursor)
+        self.query_button.setGeometry(592, 632, 70, 30)
+        self.query_button.clicked.connect(self.handle_query)
+
+        self.add_button = QLabel("点击增加:", self)
+        self.add_button.setGeometry(666, 601, 70, 30)
+        self.add_button = QPushButton("增加", self)
+        self.add_button.setCursor(Qt.PointingHandCursor)
+        self.add_button.setGeometry(666, 632, 70, 30)
+        self.add_button.clicked.connect(self.handle_query)
+
+        self.change_button = QLabel("点击修改:", self)
+        self.change_button.setGeometry(740, 601, 70, 30)
+        self.change_button = QPushButton("修改", self)
+        self.change_button.setCursor(Qt.PointingHandCursor)
+        self.change_button.setGeometry(740, 632, 70, 30)
+        self.change_button.clicked.connect(self.handle_query)
+
+        self.delete_button = QLabel("点击删除:", self)
+        self.delete_button.setGeometry(814, 601, 70, 30)
+        self.delete_button = QPushButton("删除", self)
+        self.delete_button.setCursor(Qt.PointingHandCursor)
+        self.delete_button.setGeometry(814, 632, 70, 30)
+        self.delete_button.clicked.connect(self.handle_query)
+
+        self.handle_query()
+
+    def handle_query(self):
+        # query_text = self.input_textbox.text()
+        # result = (db_connection.execute_query("SELECT * FROM reader WHERE\
+        #     RNO LIKE '{}%'".format(query_text)))
+        result = (db_connection.execute_query("SELECT * FROM shell"))
+        # 设置表格的行数和列数
+        self.result_textbox.clearContents()
+        if result:
+            self.result_textbox.setRowCount(len(result))
+            self.result_textbox.setColumnCount(len(result[0]))
+
+            # 设置列属性名
+            column_names = [desc[0] for desc in db_connection.cursor
+                            .description]
+            column_names = [shell_att[desc] for desc in column_names]
+            self.result_textbox.setHorizontalHeaderLabels(column_names)
+
+            # 填充表格数据
+            for i, row in enumerate(result):
+                for j, item in enumerate(row):
+                    table_item = QTableWidgetItem(str(item))
+                    self.result_textbox.setItem(i, j, table_item)
+
+            self.result_textbox.setEditTriggers(QAbstractItemView
+                                                .NoEditTriggers)
+            self.result_textbox.resizeColumnsToContents()
+            self.result_textbox.resizeRowsToContents()
+
 
 class ReaderManagementWindow(QDialog):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("读者管理")
         self.setGeometry(0, 0, 888, 690)
+
+        self.result_textbox = QTableWidget(self)
+        self.result_textbox.setGeometry(2, 0, 884, 600)
+        self.result_textbox.setRowCount(0)
+        self.result_textbox.setColumnCount(0)
+
+        self.label_input = QLabel("请输入关键文字:", self)
+        self.label_input.setGeometry(2, 601, 198, 30)
+        self.input_textbox = QLineEdit(self)
+        self.input_textbox.setGeometry(2, 632, 198, 30)
+
+        self.label_sort_order_combo = QLabel("排序:", self)
+        self.label_sort_order_combo.setGeometry(202, 601, 40, 30)
+        self.sort_order_combo = QComboBox(self)
+        self.sort_order_combo.addItem("升序")
+        self.sort_order_combo.addItem("降序")
+        self.sort_order_combo.setGeometry(202, 632, 60, 30)
+
+        self.label_sort_property_combo = QLabel("排序属性:", self)
+        self.label_sort_property_combo.setGeometry(264, 601, 110, 30)
+        self.sort_property_combo = QComboBox(self)
+        self.sort_property_combo.addItem("读者号")
+        self.sort_property_combo.addItem("姓名")
+        self.sort_property_combo.addItem("出生日期")
+        self.sort_property_combo.addItem("已借本数")
+        self.sort_property_combo.addItem("限借本数")
+        self.sort_property_combo.setGeometry(264, 632, 110, 30)
+
+        self.match_type_combo = QLabel("正则匹配:", self)
+        self.match_type_combo.setGeometry(376, 601, 100, 30)
+        self.match_type_combo = QComboBox(self)
+        self.match_type_combo.addItem("相关匹配")
+        self.match_type_combo.addItem("前字匹配")
+        self.match_type_combo.addItem("后字匹配")
+        self.match_type_combo.addItem("绝对匹配")
+        self.match_type_combo.setGeometry(376, 632, 100, 30)
+
+        self.regex_property_combo = QLabel("匹配属性:", self)
+        self.regex_property_combo.setGeometry(478, 601, 110, 30)
+        self.regex_property_combo = QComboBox(self)
+        self.regex_property_combo.addItem("姓名")
+        self.regex_property_combo.addItem("读者号")
+        self.regex_property_combo.addItem("性别")
+        self.regex_property_combo.addItem("身份证号")
+        self.regex_property_combo.addItem("电话")
+        self.regex_property_combo.addItem("已借本数")
+        self.regex_property_combo.addItem("限借本数")
+        self.regex_property_combo.setGeometry(478, 632, 110, 30)
+
+        self.query_button = QLabel("点击查询:", self)
+        self.query_button.setGeometry(592, 601, 70, 30)
+        self.query_button = QPushButton("查询", self)
+        self.query_button.setCursor(Qt.PointingHandCursor)
+        self.query_button.setGeometry(592, 632, 70, 30)
+        self.query_button.clicked.connect(self.handle_query)
+
+        self.add_button = QLabel("点击增加:", self)
+        self.add_button.setGeometry(666, 601, 70, 30)
+        self.add_button = QPushButton("增加", self)
+        self.add_button.setCursor(Qt.PointingHandCursor)
+        self.add_button.setGeometry(666, 632, 70, 30)
+        self.add_button.clicked.connect(self.handle_query)
+
+        self.change_button = QLabel("点击修改:", self)
+        self.change_button.setGeometry(740, 601, 70, 30)
+        self.change_button = QPushButton("修改", self)
+        self.change_button.setCursor(Qt.PointingHandCursor)
+        self.change_button.setGeometry(740, 632, 70, 30)
+        self.change_button.clicked.connect(self.handle_query)
+
+        self.delete_button = QLabel("点击删除:", self)
+        self.delete_button.setGeometry(814, 601, 70, 30)
+        self.delete_button = QPushButton("删除", self)
+        self.delete_button.setCursor(Qt.PointingHandCursor)
+        self.delete_button.setGeometry(814, 632, 70, 30)
+        self.delete_button.clicked.connect(self.handle_query)
+
+        self.handle_query()
+
+    def handle_query(self):
+        # query_text = self.input_textbox.text()
+        # result = (db_connection.execute_query("SELECT * FROM reader WHERE\
+        #     RNO LIKE '{}%'".format(query_text)))
+        result = (db_connection.execute_query("SELECT * FROM reader"))
+        # 设置表格的行数和列数
+        self.result_textbox.clearContents()
+        if result:
+            self.result_textbox.setRowCount(len(result))
+            self.result_textbox.setColumnCount(len(result[0]))
+
+            # 设置列属性名
+            column_names = [desc[0] for desc in db_connection.cursor
+                            .description]
+            column_names = [reader_att[desc] for desc in column_names]
+            self.result_textbox.setHorizontalHeaderLabels(column_names)
+
+            # 填充表格数据
+            for i, row in enumerate(result):
+                for j, item in enumerate(row):
+                    table_item = QTableWidgetItem(str(item))
+                    self.result_textbox.setItem(i, j, table_item)
+
+            self.result_textbox.setEditTriggers(QAbstractItemView
+                                                .NoEditTriggers)
+            self.result_textbox.resizeColumnsToContents()
+            self.result_textbox.resizeRowsToContents()
 
 
 class HelpDialog(QDialog):
