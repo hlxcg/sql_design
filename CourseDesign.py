@@ -211,7 +211,6 @@ class BookManagementWindow(QDialog):
         self.sort_property_combo.addItem("定价")
         self.sort_property_combo.addItem("存放书架号")
         self.sort_property_combo.addItem("状态")
-        self.sort_property_combo.addItem("借阅读者号")
         self.sort_property_combo.setGeometry(264, 632, 110, 30)
 
         self.match_type_combo = QLabel("正则匹配:", self)
