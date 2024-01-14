@@ -624,6 +624,10 @@ class MainWindow(QMainWindow):
             self.book_window = BookManagementWindow()
             self.book_window.setParent(self.container)  # 将子窗口设置为容器部件的子部件
             self.book_window.show()
+        else:
+            self.set_button_normal(self.button_book)
+            self.book_window.hide()
+            self.image_label_main.show()
 
     def show_shelf_management_window(self):
         if self.button_shelf.font().weight() != QFont.Bold:
@@ -638,6 +642,10 @@ class MainWindow(QMainWindow):
             self.shelf_window = ShelfManagementWindow()
             self.shelf_window.setParent(self.container)  # 将子窗口设置为容器部件的子部件
             self.shelf_window.show()
+        else:
+            self.set_button_normal(self.button_shelf)
+            self.shelf_window.hide()
+            self.image_label_main.show()
 
     def show_reader_management_window(self):
         if self.button_reader.font().weight() != QFont.Bold:
@@ -652,6 +660,10 @@ class MainWindow(QMainWindow):
             self.reader_window = ReaderManagementWindow()
             self.reader_window.setParent(self.container)  # 将子窗口设置为容器部件的子部件
             self.reader_window.show()
+        else:
+            self.set_button_normal(self.button_reader)
+            self.reader_window.hide()
+            self.image_label_main.show()
 
     def create_help_button(self):
         # 创建帮助信息按钮
