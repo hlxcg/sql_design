@@ -230,7 +230,6 @@ class BookManagementWindow(QDialog):
         self.regex_property_combo.addItem("书号")
         self.regex_property_combo.addItem("作者")
         self.regex_property_combo.addItem("出版社")
-        self.regex_property_combo.addItem("定价")
         self.regex_property_combo.addItem("存放书架号")
         self.regex_property_combo.addItem("状态")
         self.regex_property_combo.addItem("借阅读者号")
