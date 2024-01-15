@@ -3,7 +3,8 @@ from PyQt5.QtWidgets import (QDialog, QLabel, QCheckBox, QHBoxLayout,
                              QVBoxLayout, QApplication, QWidget, QFrame,
                              QMainWindow, QMessageBox, QTableWidgetItem,
                              QScrollArea, QTextEdit, QAction, QMenu,
-                             QFileDialog, QComboBox, QAbstractItemView)
+                             QFileDialog, QComboBox, QAbstractItemView,
+                             QDialogButtonBox)
 from PyQt5.QtCore import Qt, QDateTime, QSize, QRect, QUrl, pyqtSlot
 from PyQt5.QtGui import (QPixmap, QColor, QPalette, QFont,
                          QMovie, QMouseEvent, QCursor, QDesktopServices)
@@ -103,7 +104,8 @@ class MySQL:
             result = self.cursor.fetchall()
             return result
         except pymysql.Error as e:
-            print(f"执行查询出错：{e}")
+            QMessageBox.critical(None, "错误", f"数据库语句执行出错:{e}")
+            print(f"数据库语句执行出错:{e}")
 
     def close(self):
         if self.cursor:
@@ -116,7 +118,6 @@ class MySQL:
 class LoginWindow(QDialog):
     def __init__(self):
         super().__init__()
-        print("当前位于管理员登录窗口界面")
         self.setWindowTitle("管理员登录界面")
         screen = app.desktop().screenGeometry()
         x = 300
@@ -156,18 +157,16 @@ class LoginWindow(QDialog):
         self.setLayout(layout)
 
     def toggle_password_visibility(self, state):
-        print("点击了显示密码")
         if state == Qt.Checked:
             self.text_password.setEchoMode(QLineEdit.Normal)
         else:
             self.text_password.setEchoMode(QLineEdit.Password)
 
     def login(self):
-        print("点击了登录按钮")
         username = self.text_username.text()
         password = self.text_password.text()
-        username = "hlxcg"
-        password = "Ccyisaboy229@"
+        # username = "hlxcg"
+        # password = "Ccyisaboy229@"
         db = MySQL(host="36.139.236.110",
                    user=username,
                    password=password,
@@ -175,28 +174,159 @@ class LoginWindow(QDialog):
 
         if username == "" or password == "":
             QMessageBox.critical(None, "登录失败", "账号或密码不能为空")
-            print("登录失败, 账号或密码不能为空")
         elif db.connect():
-            print("登陆成功, 将前往主窗口")
             global db_connection
             db_connection = db
             self.accept()  # 登录成功，关闭登录界面
         else:
             QMessageBox.critical(None, "登录失败", "账号或密码错误")
-            print("登录失败, 账号或密码错误")
 
     def closeEvent(self, event):
-        print("点击了退出管理员登录界面")
         reply = QMessageBox.question(self, '提示', '确定要退出吗?',
                                      QMessageBox.Yes | QMessageBox.No,
                                      QMessageBox.No)
         if reply == QMessageBox.Yes:
-            print("退出登录窗口并退出程序, 谢谢使用")
             event.accept()
             exit()
         else:
-            print("取消退出管理员登录界面")
             event.ignore()
+
+
+class AddBookDialog(QDialog):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("添加图书")
+        screen = app.desktop().screenGeometry()
+        x, y = 300, 400
+        self.setGeometry((screen.width() - x) // 2,
+                         (screen.height() - y) // 2,
+                         x, y)
+        self.label1 = QLabel("馆藏号:", self)
+        self.input1 = QLineEdit(self)
+        self.label2 = QLabel("书号:", self)
+        self.input2 = QLineEdit(self)
+        self.label3 = QLabel("书名:", self)
+        self.input3 = QLineEdit(self)
+        self.label4 = QLabel("作者:", self)
+        self.input4 = QLineEdit(self)
+        self.label5 = QLabel("出版社:", self)
+        self.input5 = QLineEdit(self)
+        self.label6 = QLabel("定价:", self)
+        self.input6 = QLineEdit(self)
+        self.label7 = QLabel("存放书架号:", self)
+        self.input7 = QLineEdit(self)
+
+        self.button = QPushButton("确定", self)
+        self.button.clicked.connect(self.accept)
+        self.button.setStyleSheet("color: white;\
+                                         background-color: lightblue;\
+                                         font-weight: bold")
+        self.button.setCursor(Qt.PointingHandCursor)
+
+        layout = QVBoxLayout()
+        layout.addWidget(self.label1)
+        layout.addWidget(self.input1)
+        layout.addWidget(self.label2)
+        layout.addWidget(self.input2)
+        layout.addWidget(self.label3)
+        layout.addWidget(self.input3)
+        layout.addWidget(self.label4)
+        layout.addWidget(self.input4)
+        layout.addWidget(self.label5)
+        layout.addWidget(self.input5)
+        layout.addWidget(self.label6)
+        layout.addWidget(self.input6)
+        layout.addWidget(self.label7)
+        layout.addWidget(self.input7)
+        layout.addWidget(self.button)
+
+        self.setLayout(layout)
+
+    def get_data(self):
+        return (self.input1.text(), self.input2.text(), self.input3.text(),
+                self.input4.text(), self.input5.text(), self.input6.text(),
+                self.input7.text(), '在馆')
+
+
+class EditBookDialog(QDialog):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("修改图书")
+        screen = app.desktop().screenGeometry()
+        x, y = 300, 400
+        self.setGeometry((screen.width() - x) // 2,
+                         (screen.height() - y) // 2,
+                         x, y)
+
+        # 创建标签和输入框
+        self.label1 = QLabel("馆藏号:", self)
+        self.input1 = QLineEdit(self)
+        self.label2 = QLabel("书号:", self)
+        self.input2 = QLineEdit(self)
+        self.label3 = QLabel("书名:", self)
+        self.input3 = QLineEdit(self)
+        self.label4 = QLabel("作者:", self)
+        self.input4 = QLineEdit(self)
+        self.label5 = QLabel("出版社:", self)
+        self.input5 = QLineEdit(self)
+        self.label6 = QLabel("定价:", self)
+        self.input6 = QLineEdit(self)
+        self.label7 = QLabel("存放书架号:", self)
+        self.input7 = QLineEdit(self)
+        self.label8 = QLabel("状态:", self)
+        self.input8 = QLineEdit(self)
+        self.label9 = QLabel("借阅读者号:", self)
+        self.input9 = QLineEdit(self)
+
+        self.button = QPushButton("确定", self)
+        self.button.clicked.connect(self.accept)
+        self.button.setStyleSheet("color: white;\
+                                         background-color: lightblue;\
+                                         font-weight: bold")
+        self.button.setCursor(Qt.PointingHandCursor)
+
+        layout = QVBoxLayout()
+        layout.addWidget(self.label1)
+        layout.addWidget(self.input1)
+        layout.addWidget(self.label2)
+        layout.addWidget(self.input2)
+        layout.addWidget(self.label3)
+        layout.addWidget(self.input3)
+        layout.addWidget(self.label4)
+        layout.addWidget(self.input4)
+        layout.addWidget(self.label5)
+        layout.addWidget(self.input5)
+        layout.addWidget(self.label6)
+        layout.addWidget(self.input6)
+        layout.addWidget(self.label7)
+        layout.addWidget(self.input7)
+        layout.addWidget(self.label8)
+        layout.addWidget(self.input8)
+        layout.addWidget(self.label9)
+        layout.addWidget(self.input9)
+        layout.addWidget(self.button)
+
+        self.setLayout(layout)
+
+        # 连接按钮的点击事件处理函数
+        self.button.clicked.connect(self.accept)
+
+    def setValues(self, values):
+        # 设置输入框的初始值
+        self.input1.setText(str(values[0]))
+        self.input2.setText(str(values[1]))
+        self.input3.setText(str(values[2]))
+        self.input4.setText(str(values[3]))
+        self.input5.setText(str(values[4]))
+        self.input6.setText(str(values[5]))
+        self.input7.setText(str(values[6]))
+        self.input8.setText(str(values[7]))
+        self.input9.setText(str(values[8]))
+
+    def get_data(self):
+        return (self.input1.text(), self.input2.text(), self.input3.text(),
+                self.input4.text(), self.input5.text(), self.input6.text(),
+                self.input7.text(), self.input7.text(), self.input9.text())
 
 
 class BookManagementWindow(QDialog):
@@ -278,7 +408,7 @@ class BookManagementWindow(QDialog):
                                          font-weight: bold")
         self.add_button.setCursor(Qt.PointingHandCursor)
         self.add_button.setGeometry(602, 632, 70, 30)
-        self.add_button.clicked.connect(self.handle_query)
+        self.add_button.clicked.connect(self.handle_add)
 
         self.change_button = QLabel("点击修改:", self)
         self.change_button.setGeometry(674, 601, 70, 30)
@@ -288,7 +418,7 @@ class BookManagementWindow(QDialog):
                                          font-weight: bold")
         self.change_button.setCursor(Qt.PointingHandCursor)
         self.change_button.setGeometry(674, 632, 70, 30)
-        self.change_button.clicked.connect(self.handle_query)
+        self.change_button.clicked.connect(self.handle_change)
 
         self.delete_button = QLabel("点击删除:", self)
         self.delete_button.setGeometry(746, 601, 70, 30)
@@ -298,23 +428,21 @@ class BookManagementWindow(QDialog):
                                          font-weight: bold")
         self.delete_button.setCursor(Qt.PointingHandCursor)
         self.delete_button.setGeometry(746, 632, 70, 30)
-        self.delete_button.clicked.connect(self.handle_query)
+        self.delete_button.clicked.connect(self.handle_delete)
 
-        self.borrow_button = QLabel("点击借阅:", self)
+        self.borrow_button = QLabel("点击借还:", self)
         self.borrow_button.setGeometry(818, 601, 70, 30)
-        self.borrow_button = QPushButton("借阅", self)
+        self.borrow_button = QPushButton("借还", self)
         self.borrow_button.setStyleSheet("color: blue;\
                                          background-color: lightblue;\
                                          font-weight: bold")
         self.borrow_button.setCursor(Qt.PointingHandCursor)
         self.borrow_button.setGeometry(818, 632, 70, 30)
-        self.borrow_button.clicked.connect(self.handle_query)
+        self.borrow_button.clicked.connect(self.handle_borrow)
 
         self.handle_query()
 
     def handle_query(self):
-        print("点击了{}按钮".format(self.sender().text()))
-        self.main_win.renew_bs()
         key_text = self.input_textbox.text()
         sort_text = self.sort_order_combo.currentText()
         sort_property = self.sort_property_combo.currentText()
@@ -356,19 +484,259 @@ class BookManagementWindow(QDialog):
             self.result_textbox.setRowCount(1)
             self.result_textbox.setColumnCount(1)
             self.result_textbox.horizontalHeader().setVisible(False)
+            self.result_textbox.setColumnWidth(0, 100)  # 设置第一列的宽度为300
             self.result_textbox.setItem(0, 0, QTableWidgetItem("查询结果为空"))
+        self.main_win.renew_bs()
+
+    def handle_delete(self):
+        reply = QMessageBox.question(self, '提示',
+                                     '确定要删除吗?', QMessageBox
+                                     .Yes | QMessageBox.No, QMessageBox.No)
+        if reply == QMessageBox.Yes:
+            if len(self.result_textbox.selectedRanges()) != 0:
+                delete_text = ("DELETE FROM books WHERE BNO=\'{}\'"
+                               .format(self.choice_id))
+                print(delete_text)
+                db_connection.execute_query(delete_text)
+                db_connection.execute_query("COMMIT")
+
+                self.main_win.renew_bs()
+                self.handle_query()
+            else:
+                QMessageBox.critical(None, "删除失败", "未选择元组")
+
+    def handle_borrow(self):
+        dialog = QDialog()
+        dialog.setWindowTitle('请输入借阅信息')
+        dialog.setFixedSize(300, 160)  # 设置弹窗的大小
+
+        layout = QVBoxLayout()
+
+        book_no_label = QLabel('馆藏号:')
+        book_no_input = QLineEdit()
+        layout.addWidget(book_no_label)
+        layout.addWidget(book_no_input)
+
+        borrower_no_label = QLabel('借阅读者号:')
+        borrower_no_input = QLineEdit()
+        layout.addWidget(borrower_no_label)
+        layout.addWidget(borrower_no_input)
+
+        button_box = QDialogButtonBox(QDialogButtonBox.Ok |
+                                      QDialogButtonBox.Cancel)
+        button_box.accepted.connect(dialog.accept)
+        button_box.rejected.connect(dialog.reject)
+        layout.addWidget(button_box)
+
+        dialog.setLayout(layout)
+
+        if dialog.exec_() == QDialog.Accepted:
+            book_no = book_no_input.text()
+            borrower_no = borrower_no_input.text()
+            if book_no == '' or borrower_no == '':
+                QMessageBox.critical(None, "借还失败", "馆藏号或借阅读者号不能为空")
+                self.handle_borrow()
+            else:
+                print('馆藏号:', book_no)
+                print('借阅读者号:', borrower_no)
+                borrow_text_st1 = ("select * FROM books WHERE BNO=\'{}\'"
+                                   .format(book_no))
+                borrow_text_st2 = ("select * FROM reader WHERE RNO=\'{}\'"
+                                   .format(borrower_no))
+                print(borrow_text_st1)
+                print(borrow_text_st2)
+                result_q1 = db_connection.execute_query(borrow_text_st1)
+                result_q2 = db_connection.execute_query(borrow_text_st2)
+                if len(result_q1) == 0 or len(result_q2) == 0:
+                    QMessageBox.critical(None, "借还失败", "不存在该书或该读者")
+                    self.handle_borrow()
+                elif result_q1[0][7] == '在馆':
+                    if result_q2[0][6] + 1 > result_q2[0][7]:
+                        QMessageBox.critical(None, "借还失败", "超出借阅数量")
+                        self.handle_borrow()
+                    else:
+                        borrow_text_st3 = ("UPDATE books SET STATE='在借', RNO=\
+                            \'{0}\' WHERE BNO=\'{1}\'".format(borrower_no,
+                                                              book_no))
+                        borrow_text_st4 = ("UPDATE reader SET BD=BD+1\
+                            WHERE RNO=\'{}\'".format(borrower_no))
+                        db_connection.execute_query(borrow_text_st2)
+                        print(borrow_text_st3)
+                        print(borrow_text_st4)
+                        db_connection.execute_query(borrow_text_st3)
+                        db_connection.execute_query(borrow_text_st4)
+                        db_connection.execute_query("COMMIT")
+
+                        self.main_win.renew_bs()
+                        self.handle_query()
+                elif (result_q1[0][7] == '在借' and
+                      result_q1[0][8] == borrower_no):
+                    borrow_text_st3 = ("UPDATE books SET STATE='在馆',\
+                        RNO=NULL WHERE BNO=\'{}\'".format(book_no))
+                    borrow_text_st4 = ("UPDATE reader SET BD=BD-1\
+                        WHERE RNO=\'{}\'".format(borrower_no))
+                    db_connection.execute_query(borrow_text_st2)
+                    print(borrow_text_st3)
+                    print(borrow_text_st4)
+                    db_connection.execute_query(borrow_text_st3)
+                    db_connection.execute_query(borrow_text_st4)
+                    db_connection.execute_query("COMMIT")
+
+                    self.main_win.renew_bs()
+                    self.handle_query()
+                else:
+                    QMessageBox.critical(None, "借还失败", "不存在该借阅关系")
+                    self.handle_borrow()
+
+    def handle_add(self):
+        dialog = AddBookDialog(self)
+        if dialog.exec_():
+            data = dialog.get_data()
+            print(data)
+            insert_text = "INSERT INTO books (BNO,ISBN,BNAME,WRITER,PUB,PRICE,\
+                CNO,STATE) VALUES{}".format(data)
+            print(insert_text)
+            db_connection.execute_query(insert_text)
+            db_connection.execute_query("COMMIT")
+
+            self.main_win.renew_bs()
+            self.handle_query()
+
+    def handle_change(self):
+        reply = QMessageBox.question(self, '提示',
+                                     '确定要修改吗?', QMessageBox
+                                     .Yes | QMessageBox.No, QMessageBox.No)
+        if reply == QMessageBox.Yes:
+            if len(self.result_textbox.selectedRanges()) != 0:
+                dialog = EditBookDialog()
+                dialog.setValues(db_connection.execute_query("SELECT * FROM\
+                    books WHERE BNO=\'{}\'".format(self.choice_id))[0])
+                if dialog.exec_() == QDialog.Accepted:
+                    change_text = ("UPDATE books SET BNO=\'{0}\',ISBN=\'{1}\',\
+                        BNAME=\'{2}\',WRITER=\'{3}\',PUB=\'{4}\',PRICE=\'{5}\',CNO=\'{6}\',\
+                            STATE=\'{7}\',RNO=\'{8}\' WHERE BNO=\'{9}\'\
+                                ".format(dialog.get_data()[0],
+                                         dialog.get_data()[1],
+                                         dialog.get_data()[2],
+                                         dialog.get_data()[3],
+                                         dialog.get_data()[4],
+                                         dialog.get_data()[5],
+                                         dialog.get_data()[6],
+                                         dialog.get_data()[7],
+                                         dialog.get_data()[8],
+                                         self.choice_id))
+                    print(change_text)
+                    db_connection.execute_query(change_text)
+                    db_connection.execute_query("COMMIT")
+
+                    self.main_win.renew_bs()
+                    self.handle_query()
+            else:
+                QMessageBox.critical(None, "修改失败", "未选择元组")
 
     def handle_cell_clicked(self, row, column):
-        selected_ranges = self.result_textbox.selectedRanges()
-        if len(selected_ranges) > 0:
-            selected_rows = []
-            selected_range = selected_ranges[0]  # 只取第一个选中区域
-            selected_row = selected_range.topRow()
-            selected_rows.append(selected_row)
-            id = self.result_textbox.item(selected_rows[0], 0).text()
-            print("选中了元组:")
-            print(selected_rows[0])
-            print("该元组唯一标识符:{}".format(id))
+        self.selected_range = self.result_textbox.selectedRanges()[0]
+        selected_row = self.selected_range.topRow()
+        self.choice_id = self.result_textbox.item(selected_row, 0).text()
+        print("该元组唯一标识符:{}".format(self.choice_id))
+
+
+class AddShelfDialog(QDialog):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("添加书架")
+        screen = app.desktop().screenGeometry()
+        x, y = 300, 200
+        self.setGeometry((screen.width() - x) // 2,
+                         (screen.height() - y) // 2,
+                         x, y)
+        self.label1 = QLabel("书架号:", self)
+        self.input1 = QLineEdit(self)
+        self.label2 = QLabel("书架名:", self)
+        self.input2 = QLineEdit(self)
+        self.label3 = QLabel("分类:", self)
+        self.input3 = QLineEdit(self)
+        self.label4 = QLabel("管理员工号:", self)
+        self.input4 = QLineEdit(self)
+
+        self.button = QPushButton("确定", self)
+        self.button.clicked.connect(self.accept)
+        self.button.setStyleSheet("color: white;\
+                                         background-color: lightblue;\
+                                         font-weight: bold")
+        self.button.setCursor(Qt.PointingHandCursor)
+
+        layout = QVBoxLayout()
+        layout.addWidget(self.label1)
+        layout.addWidget(self.input1)
+        layout.addWidget(self.label2)
+        layout.addWidget(self.input2)
+        layout.addWidget(self.label3)
+        layout.addWidget(self.input3)
+        layout.addWidget(self.label4)
+        layout.addWidget(self.input4)
+        layout.addWidget(self.button)
+
+        self.setLayout(layout)
+
+    def get_data(self):
+        return (self.input1.text(), self.input2.text(), self.input3.text(),
+                self.input4.text())
+
+
+class EditShelfDialog(QDialog):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("修改书架")
+        screen = app.desktop().screenGeometry()
+        x, y = 300, 200
+        self.setGeometry((screen.width() - x) // 2,
+                         (screen.height() - y) // 2,
+                         x, y)
+
+        # 创建标签和输入框
+        self.label1 = QLabel("书架号:", self)
+        self.input1 = QLineEdit(self)
+        self.label2 = QLabel("书架名:", self)
+        self.input2 = QLineEdit(self)
+        self.label3 = QLabel("分类:", self)
+        self.input3 = QLineEdit(self)
+        self.label4 = QLabel("管理员工号:", self)
+        self.input4 = QLineEdit(self)
+
+        self.button = QPushButton("确定", self)
+        self.button.clicked.connect(self.accept)
+        self.button.setStyleSheet("color: white;\
+                                         background-color: lightblue;\
+                                         font-weight: bold")
+        self.button.setCursor(Qt.PointingHandCursor)
+
+        layout = QVBoxLayout()
+        layout.addWidget(self.label1)
+        layout.addWidget(self.input1)
+        layout.addWidget(self.label2)
+        layout.addWidget(self.input2)
+        layout.addWidget(self.label3)
+        layout.addWidget(self.input3)
+        layout.addWidget(self.label4)
+        layout.addWidget(self.input4)
+        layout.addWidget(self.button)
+
+        self.setLayout(layout)
+
+        # 连接按钮的点击事件处理函数
+        self.button.clicked.connect(self.accept)
+
+    def setValues(self, values):
+        # 设置输入框的初始值
+        self.input1.setText(str(values[0]))
+        self.input2.setText(str(values[1]))
+        self.input3.setText(str(values[2]))
+        self.input4.setText(str(values[3]))
+
+    def get_data(self):
+        return (self.input1.text(), self.input2.text(), self.input3.text(),
+                self.input4.text())
 
 
 class ShelfManagementWindow(QDialog):
@@ -441,7 +809,7 @@ class ShelfManagementWindow(QDialog):
                                          font-weight: bold")
         self.add_button.setCursor(Qt.PointingHandCursor)
         self.add_button.setGeometry(666, 632, 70, 30)
-        self.add_button.clicked.connect(self.handle_query)
+        self.add_button.clicked.connect(self.handle_add)
 
         self.change_button = QLabel("点击修改:", self)
         self.change_button.setGeometry(740, 601, 70, 30)
@@ -451,7 +819,7 @@ class ShelfManagementWindow(QDialog):
                                          font-weight: bold")
         self.change_button.setCursor(Qt.PointingHandCursor)
         self.change_button.setGeometry(740, 632, 70, 30)
-        self.change_button.clicked.connect(self.handle_query)
+        self.change_button.clicked.connect(self.handle_change)
 
         self.delete_button = QLabel("点击删除:", self)
         self.delete_button.setGeometry(814, 601, 70, 30)
@@ -461,13 +829,11 @@ class ShelfManagementWindow(QDialog):
                                          font-weight: bold")
         self.delete_button.setCursor(Qt.PointingHandCursor)
         self.delete_button.setGeometry(814, 632, 70, 30)
-        self.delete_button.clicked.connect(self.handle_query)
+        self.delete_button.clicked.connect(self.handle_delete)
 
         self.handle_query()
 
     def handle_query(self):
-        print("点击了{}按钮".format(self.sender().text()))
-        self.main_win.renew_bs()
         key_text = self.input_textbox.text()
         sort_text = self.sort_order_combo.currentText()
         sort_property = self.sort_property_combo.currentText()
@@ -509,19 +875,204 @@ class ShelfManagementWindow(QDialog):
             self.result_textbox.setRowCount(1)
             self.result_textbox.setColumnCount(1)
             self.result_textbox.horizontalHeader().setVisible(False)
+            self.result_textbox.setColumnWidth(0, 100)  # 设置第一列的宽度为300
             self.result_textbox.setItem(0, 0, QTableWidgetItem("查询结果为空"))
+        self.main_win.renew_bs()
+
+    def handle_delete(self):
+        reply = QMessageBox.question(self, '提示',
+                                     '确定要删除吗?', QMessageBox
+                                     .Yes | QMessageBox.No, QMessageBox.No)
+        if reply == QMessageBox.Yes:
+            if len(self.result_textbox.selectedRanges()) != 0:
+                delete_text = ("DELETE FROM shell WHERE CNO=\'{}\'"
+                               .format(self.choice_id))
+                print(delete_text)
+                db_connection.execute_query(delete_text)
+                db_connection.execute_query("COMMIT")
+
+                self.main_win.renew_bs()
+                self.handle_query()
+            else:
+                QMessageBox.critical(None, "删除失败", "未选择元组")
+
+    def handle_add(self):
+        dialog = AddShelfDialog(self)
+        if dialog.exec_():
+            data = dialog.get_data()
+            print(data)
+            #  (CNO,CNAME,KIND,WNO)
+            insert_text = ("INSERT INTO shell VALUES{}"
+                           .format(data))
+            print(insert_text)
+            db_connection.execute_query(insert_text)
+            db_connection.execute_query("COMMIT")
+
+            self.main_win.renew_bs()
+            self.handle_query()
+
+    def handle_change(self):
+        reply = QMessageBox.question(self, '提示',
+                                     '确定要修改吗?', QMessageBox
+                                     .Yes | QMessageBox.No, QMessageBox.No)
+        if reply == QMessageBox.Yes:
+            if len(self.result_textbox.selectedRanges()) != 0:
+                dialog = EditShelfDialog()
+                dialog.setValues(db_connection.execute_query("SELECT * FROM\
+                    shell WHERE CNO=\'{}\'".format(self.choice_id))[0])
+                if dialog.exec_() == QDialog.Accepted:
+                    change_text = ("UPDATE shell SET CNO=\'{0}\',CNAME=\'{1}\'\
+                        ,KIND=\'{2}\',WNO=\'{3}\' WHERE CNO=\'{4}\'\
+                                ".format(dialog.get_data()[0],
+                                         dialog.get_data()[1],
+                                         dialog.get_data()[2],
+                                         dialog.get_data()[3],
+                                         self.choice_id))
+                    print(change_text)
+                    db_connection.execute_query(change_text)
+                    db_connection.execute_query("COMMIT")
+
+                    self.main_win.renew_bs()
+                    self.handle_query()
+            else:
+                QMessageBox.critical(None, "修改失败", "未选择元组")
 
     def handle_cell_clicked(self, row, column):
-        selected_ranges = self.result_textbox.selectedRanges()
-        if len(selected_ranges) > 0:
-            selected_rows = []
-            selected_range = selected_ranges[0]  # 只取第一个选中区域
-            selected_row = selected_range.topRow()
-            selected_rows.append(selected_row)
-            id = self.result_textbox.item(selected_rows[0], 0).text()
-            print("选中了元组:")
-            print(selected_rows[0])
-            print("该元组唯一标识符:{}".format(id))
+        self.selected_range = self.result_textbox.selectedRanges()[0]
+        selected_row = self.selected_range.topRow()
+        self.choice_id = self.result_textbox.item(selected_row, 0).text()
+        print("该元组唯一标识符:{}".format(self.choice_id))
+
+
+class AddReaderDialog(QDialog):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("添加读者")
+        screen = app.desktop().screenGeometry()
+        x, y = 300, 400
+        self.setGeometry((screen.width() - x) // 2,
+                         (screen.height() - y) // 2,
+                         x, y)
+        self.label1 = QLabel("读者号:", self)
+        self.input1 = QLineEdit(self)
+        self.label2 = QLabel("姓名:", self)
+        self.input2 = QLineEdit(self)
+        self.label3 = QLabel("性别:", self)
+        self.input3 = QLineEdit(self)
+        self.label4 = QLabel("出生日期:", self)
+        self.input4 = QLineEdit(self)
+        self.label5 = QLabel("身份证号:", self)
+        self.input5 = QLineEdit(self)
+        self.label6 = QLabel("电话:", self)
+        self.input6 = QLineEdit(self)
+        self.label7 = QLabel("限借本数:", self)
+        self.input7 = QLineEdit(self)
+
+        self.button = QPushButton("确定", self)
+        self.button.clicked.connect(self.accept)
+        self.button.setStyleSheet("color: white;\
+                                         background-color: lightblue;\
+                                         font-weight: bold")
+        self.button.setCursor(Qt.PointingHandCursor)
+
+        layout = QVBoxLayout()
+        layout.addWidget(self.label1)
+        layout.addWidget(self.input1)
+        layout.addWidget(self.label2)
+        layout.addWidget(self.input2)
+        layout.addWidget(self.label3)
+        layout.addWidget(self.input3)
+        layout.addWidget(self.label4)
+        layout.addWidget(self.input4)
+        layout.addWidget(self.label5)
+        layout.addWidget(self.input5)
+        layout.addWidget(self.label6)
+        layout.addWidget(self.input6)
+        layout.addWidget(self.label7)
+        layout.addWidget(self.input7)
+        layout.addWidget(self.button)
+
+        self.setLayout(layout)
+
+    def get_data(self):
+        return (self.input1.text(), self.input2.text(), self.input3.text(),
+                self.input4.text(), self.input5.text(), self.input6.text(),
+                0, self.input7.text())
+
+
+class EditReaderDialog(QDialog):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("修改读者")
+        screen = app.desktop().screenGeometry()
+        x, y = 300, 400
+        self.setGeometry((screen.width() - x) // 2,
+                         (screen.height() - y) // 2,
+                         x, y)
+        # 创建标签和输入框
+        self.label1 = QLabel("读者号:", self)
+        self.input1 = QLineEdit(self)
+        self.label2 = QLabel("姓名:", self)
+        self.input2 = QLineEdit(self)
+        self.label3 = QLabel("性别:", self)
+        self.input3 = QLineEdit(self)
+        self.label4 = QLabel("出生日期:", self)
+        self.input4 = QLineEdit(self)
+        self.label5 = QLabel("身份证号:", self)
+        self.input5 = QLineEdit(self)
+        self.label6 = QLabel("电话:", self)
+        self.input6 = QLineEdit(self)
+        self.label7 = QLabel("已借本数:", self)
+        self.input7 = QLineEdit(self)
+        self.label8 = QLabel("限借本数:", self)
+        self.input8 = QLineEdit(self)
+
+        self.button = QPushButton("确定", self)
+        self.button.clicked.connect(self.accept)
+        self.button.setStyleSheet("color: white;\
+                                         background-color: lightblue;\
+                                         font-weight: bold")
+        self.button.setCursor(Qt.PointingHandCursor)
+
+        layout = QVBoxLayout()
+        layout.addWidget(self.label1)
+        layout.addWidget(self.input1)
+        layout.addWidget(self.label2)
+        layout.addWidget(self.input2)
+        layout.addWidget(self.label3)
+        layout.addWidget(self.input3)
+        layout.addWidget(self.label4)
+        layout.addWidget(self.input4)
+        layout.addWidget(self.label5)
+        layout.addWidget(self.input5)
+        layout.addWidget(self.label6)
+        layout.addWidget(self.input6)
+        layout.addWidget(self.label7)
+        layout.addWidget(self.input7)
+        layout.addWidget(self.label8)
+        layout.addWidget(self.input8)
+        layout.addWidget(self.button)
+
+        self.setLayout(layout)
+
+        # 连接按钮的点击事件处理函数
+        self.button.clicked.connect(self.accept)
+
+    def setValues(self, values):
+        # 设置输入框的初始值
+        self.input1.setText(str(values[0]))
+        self.input2.setText(str(values[1]))
+        self.input3.setText(str(values[2]))
+        self.input4.setText(str(values[3]))
+        self.input5.setText(str(values[4]))
+        self.input6.setText(str(values[5]))
+        self.input7.setText(str(values[6]))
+        self.input8.setText(str(values[7]))
+
+    def get_data(self):
+        return (self.input1.text(), self.input2.text(), self.input3.text(),
+                self.input4.text(), self.input5.text(), self.input6.text(),
+                self.input7.text(), self.input7.text())
 
 
 class ReaderManagementWindow(QDialog):
@@ -598,7 +1149,7 @@ class ReaderManagementWindow(QDialog):
                                          font-weight: bold")
         self.add_button.setCursor(Qt.PointingHandCursor)
         self.add_button.setGeometry(666, 632, 70, 30)
-        self.add_button.clicked.connect(self.handle_query)
+        self.add_button.clicked.connect(self.handle_add)
 
         self.change_button = QLabel("点击修改:", self)
         self.change_button.setGeometry(740, 601, 70, 30)
@@ -608,7 +1159,7 @@ class ReaderManagementWindow(QDialog):
                                          font-weight: bold")
         self.change_button.setCursor(Qt.PointingHandCursor)
         self.change_button.setGeometry(740, 632, 70, 30)
-        self.change_button.clicked.connect(self.handle_query)
+        self.change_button.clicked.connect(self.handle_change)
 
         self.delete_button = QLabel("点击删除:", self)
         self.delete_button.setGeometry(814, 601, 70, 30)
@@ -618,13 +1169,11 @@ class ReaderManagementWindow(QDialog):
                                          font-weight: bold")
         self.delete_button.setCursor(Qt.PointingHandCursor)
         self.delete_button.setGeometry(814, 632, 70, 30)
-        self.delete_button.clicked.connect(self.handle_query)
+        self.delete_button.clicked.connect(self.handle_delete)
 
         self.handle_query()
 
     def handle_query(self):
-        print("点击了{}按钮".format(self.sender().text()))
-        self.main_win.renew_bs()
         key_text = self.input_textbox.text()
         sort_text = self.sort_order_combo.currentText()
         sort_property = self.sort_property_combo.currentText()
@@ -667,25 +1216,83 @@ class ReaderManagementWindow(QDialog):
             self.result_textbox.setRowCount(1)
             self.result_textbox.setColumnCount(1)
             self.result_textbox.horizontalHeader().setVisible(False)
+            self.result_textbox.setColumnWidth(0, 100)  # 设置第一列的宽度为300
             self.result_textbox.setItem(0, 0, QTableWidgetItem("查询结果为空"))
+        self.main_win.renew_bs()
+
+    def handle_delete(self):
+        print("在图书管理窗口点击了{}按钮".format(self.sender().text()))
+        reply = QMessageBox.question(self, '提示',
+                                     '确定要删除吗?', QMessageBox
+                                     .Yes | QMessageBox.No, QMessageBox.No)
+        if reply == QMessageBox.Yes:
+            if len(self.result_textbox.selectedRanges()) != 0:
+                delete_text = ("DELETE FROM reader WHERE RNO=\'{}\'"
+                               .format(self.choice_id))
+                print(delete_text)
+                db_connection.execute_query(delete_text)
+                db_connection.execute_query("COMMIT")
+
+                self.main_win.renew_bs()
+                self.handle_query()
+            else:
+                QMessageBox.critical(None, "删除失败", "未选择元组")
+
+    def handle_add(self):
+        dialog = AddReaderDialog(self)
+        if dialog.exec_():
+            data = dialog.get_data()
+            print(data)
+            insert_text = ("INSERT INTO reader (RNO,RNAME,RSEX,RBIRTH,RID,\
+                           RTEL,BD,LIM) VALUES{}".format(data))
+            print(insert_text)
+            db_connection.execute_query(insert_text)
+            db_connection.execute_query("COMMIT")
+
+            self.main_win.renew_bs()
+            self.handle_query()
+
+    def handle_change(self):
+        reply = QMessageBox.question(self, '提示',
+                                     '确定要修改吗?', QMessageBox
+                                     .Yes | QMessageBox.No, QMessageBox.No)
+        if reply == QMessageBox.Yes:
+            if len(self.result_textbox.selectedRanges()) != 0:
+                dialog = EditReaderDialog()
+                dialog.setValues(db_connection.execute_query("SELECT * FROM\
+                    reader WHERE RNO=\'{}\'".format(self.choice_id))[0])
+                if dialog.exec_() == QDialog.Accepted:
+                    change_text = ("UPDATE reader SET RNO=\'{0}\',RNAME=\
+                        \'{1}\',RSEX=\'{2}\',RBIRTH=\'{3}\',RID=\'{4}\',RTEL=\'{5}\',BD=\'{6}\',\
+                            LIM=\'{7}\' WHERE RNO=\'{8}\'\
+                                ".format(dialog.get_data()[0],
+                                         dialog.get_data()[1],
+                                         dialog.get_data()[2],
+                                         dialog.get_data()[3],
+                                         dialog.get_data()[4],
+                                         dialog.get_data()[5],
+                                         dialog.get_data()[6],
+                                         dialog.get_data()[7],
+                                         self.choice_id))
+                    print(change_text)
+                    db_connection.execute_query(change_text)
+                    db_connection.execute_query("COMMIT")
+
+                    self.main_win.renew_bs()
+                    self.handle_query()
+            else:
+                QMessageBox.critical(None, "修改失败", "未选择元组")
 
     def handle_cell_clicked(self, row, column):
-        selected_ranges = self.result_textbox.selectedRanges()
-        if len(selected_ranges) > 0:
-            selected_rows = []
-            selected_range = selected_ranges[0]  # 只取第一个选中区域
-            selected_row = selected_range.topRow()
-            selected_rows.append(selected_row)
-            id = self.result_textbox.item(selected_rows[0], 0).text()
-            print("选中了元组:")
-            print(selected_rows[0])
-            print("该元组唯一标识符:{}".format(id))
+        self.selected_range = self.result_textbox.selectedRanges()[0]
+        selected_row = self.selected_range.topRow()
+        self.choice_id = self.result_textbox.item(selected_row, 0).text()
+        print("该元组唯一标识符:{}".format(self.choice_id))
 
 
 class HelpDialog(QDialog):
     def __init__(self, content):
         super().__init__()
-        print("当前是帮助页面")
 
         self.setWindowTitle("帮助")
         screen = app.desktop().screenGeometry()
@@ -723,7 +1330,6 @@ class MainWindow(QMainWindow):
         self.login_window.exec_()
 
     def on_login_accepted(self):
-        print("当前位于主窗口")
         # 清空账号和密码
         self.login_window.text_username.setText('')
         self.login_window.text_password.setText('')
@@ -745,7 +1351,6 @@ class MainWindow(QMainWindow):
             UNM=\"{}\"".format(admin_name))
         self.usrname = res[0][0]
         label_lg = QLabel(u"当前登录,管理员:{0}".format(self.usrname), self)
-        print("当前登录管理员是{0}".format(self.usrname))
         label_lg.setGeometry(self.width() - 290, 2, 190, 20)
         label_lg.setStyleSheet("color: red; background-color: transparent;")
 
@@ -818,21 +1423,19 @@ class MainWindow(QMainWindow):
         if event.button() == Qt.RightButton:
             pos = event.pos()
             if self.is_in_custom_area(pos):
-                print("在图书情况处右击")
                 self.show_context_menu_rf(pos)
         else:
             super().mousePressEvent(event)
 
     @pyqtSlot()
     def renew_bs(self):
-        print("已刷新")
         # 修改图书情况标签的文本内容、字体和大小
         res_bk = db_connection.execute_query("SELECT COUNT(*) FROM books")
         res_bbk = db_connection.execute_query("SELECT COUNT(*) FROM books\
                                               WHERE STATE != \"在馆\"")
         res_rd = db_connection.execute_query("SELECT COUNT(*) FROM reader")
-        res_brd = db_connection.execute_query("SELECT DISTINCT COUNT(RNO)\
-            FROM books WHERE RNO != NULL")
+        res_brd = db_connection.execute_query("SELECT COUNT(*)\
+            FROM reader WHERE BD > 0")
         (self.book_textedit.setText("馆藏图书数量: {0}\n已借阅图书数量: {1}\n注册读者数量: {2}\
             \n已借书读者数量: {3}".format(res_bk[0][0], res_bbk[0][0],
                                    res_rd[0][0], res_brd[0][0])))
@@ -902,13 +1505,11 @@ class MainWindow(QMainWindow):
 
     def show_context_menu_cp(self, pos):
         menu = QMenu(self)
-        print("在自定义图片处右击")
         action_change_image = menu.addAction("切换图片")
         action_change_image.triggered.connect(self.change_image)
         menu.exec_(self.image_label_ys.mapToGlobal(pos))
 
     def change_image(self):
-        print("选择替换图片")
         file_dialog = QFileDialog()
         file_dialog.setDirectory("resource/images")
         file_path, _ = (file_dialog
@@ -924,7 +1525,6 @@ class MainWindow(QMainWindow):
             movie.start()
 
     def handle_switch_account(self):
-        print("点击了切换账号按钮")
         reply = QMessageBox.question(self, '提示', '确定要切换账号吗？',
                                      QMessageBox.Yes | QMessageBox.No,
                                      QMessageBox.No)
@@ -934,8 +1534,6 @@ class MainWindow(QMainWindow):
             self.close()
             switch_win = None
             main_window = MainWindow()
-        else:
-            print("取消切换账号")
 
     def create_footer(self):
         line_h = QFrame(self)
@@ -1000,8 +1598,23 @@ class MainWindow(QMainWindow):
         button.setStyleSheet("QToolButton { font-weight: normal; }")
 
     def show_book_management_window(self):
-        print("点击了图书管理按钮")
-        if self.button_book.font().weight() != QFont.Bold:
+        if hasattr(self, "book_window"):
+            if self.button_book.font().weight() != QFont.Bold:
+                self.image_label_main.hide()
+                if hasattr(self, "shelf_window"):
+                    self.shelf_window.hide()
+                if hasattr(self, "reader_window"):
+                    self.reader_window.hide()
+                self.set_button_normal(self.button_shelf)
+                self.set_button_normal(self.button_reader)
+                self.set_button_text_bold(self.button_book)
+                self.book_window.handle_query()
+                self.book_window.show()
+            else:
+                self.set_button_normal(self.button_book)
+                self.book_window.hide()
+                self.image_label_main.show()
+        else:
             self.image_label_main.hide()
             if hasattr(self, "shelf_window"):
                 self.shelf_window.hide()
@@ -1013,14 +1626,25 @@ class MainWindow(QMainWindow):
             self.book_window = BookManagementWindow(self)
             self.book_window.setParent(self.container)  # 将子窗口设置为容器部件的子部件
             self.book_window.show()
-        else:
-            self.set_button_normal(self.button_book)
-            self.book_window.hide()
-            self.image_label_main.show()
 
     def show_shelf_management_window(self):
-        print("点击了书架管理按钮")
-        if self.button_shelf.font().weight() != QFont.Bold:
+        if hasattr(self, "shelf_window"):
+            if self.button_shelf.font().weight() != QFont.Bold:
+                self.image_label_main.hide()
+                if hasattr(self, "book_window"):
+                    self.book_window.hide()
+                if hasattr(self, "reader_window"):
+                    self.reader_window.hide()
+                self.set_button_normal(self.button_book)
+                self.set_button_normal(self.button_reader)
+                self.set_button_text_bold(self.button_shelf)
+                self.shelf_window.handle_query()
+                self.shelf_window.show()
+            else:
+                self.set_button_normal(self.button_shelf)
+                self.shelf_window.hide()
+                self.image_label_main.show()
+        else:
             self.image_label_main.hide()
             if hasattr(self, "book_window"):
                 self.book_window.hide()
@@ -1032,14 +1656,25 @@ class MainWindow(QMainWindow):
             self.shelf_window = ShelfManagementWindow(self)
             self.shelf_window.setParent(self.container)  # 将子窗口设置为容器部件的子部件
             self.shelf_window.show()
-        else:
-            self.set_button_normal(self.button_shelf)
-            self.shelf_window.hide()
-            self.image_label_main.show()
 
     def show_reader_management_window(self):
-        print("点击了读者管理按钮")
-        if self.button_reader.font().weight() != QFont.Bold:
+        if hasattr(self, "reader_window"):
+            if self.button_reader.font().weight() != QFont.Bold:
+                self.image_label_main.hide()
+                if hasattr(self, "book_window"):
+                    self.book_window.hide()
+                if hasattr(self, "shelf_window"):
+                    self.shelf_window.hide()
+                self.set_button_normal(self.button_book)
+                self.set_button_normal(self.button_shelf)
+                self.set_button_text_bold(self.button_reader)
+                self.reader_window.handle_query()
+                self.reader_window.show()
+            else:
+                self.set_button_normal(self.button_reader)
+                self.reader_window.hide()
+                self.image_label_main.show()
+        else:
             self.image_label_main.hide()
             if hasattr(self, "book_window"):
                 self.book_window.hide()
@@ -1051,10 +1686,6 @@ class MainWindow(QMainWindow):
             self.reader_window = ReaderManagementWindow(self)
             self.reader_window.setParent(self.container)  # 将子窗口设置为容器部件的子部件
             self.reader_window.show()
-        else:
-            self.set_button_normal(self.button_reader)
-            self.reader_window.hide()
-            self.image_label_main.show()
 
     def create_help_button(self):
         # 创建帮助信息按钮
@@ -1080,21 +1711,17 @@ class MainWindow(QMainWindow):
         self.about_label.setGeometry(890, 659, 32, 30)
 
     def open_website(self, event):
-        print("点击关于按钮,将前往github")
         reply = QMessageBox.question(self, '提示',
                                      '源码给出仅供参考学习,是否前往?', QMessageBox
                                      .Yes | QMessageBox.No, QMessageBox.No)
         if reply == QMessageBox.Yes:
             url = QUrl("https://github.com/hlxcg/sql_design")
             QDesktopServices.openUrl(url)
-            print("正在前往github")
             event.accept()
         else:
-            print("取消前往github")
             event.ignore()
 
     def show_help(self, event):
-        print("点击了帮助按钮")
         with open("resource/help.txt", encoding="utf-8") as f:
             help_text = f.read()
 
@@ -1102,11 +1729,9 @@ class MainWindow(QMainWindow):
         dialog.exec_()
 
     def closeEvent(self, event):
-        print("点击了主窗口关闭")
         if switch_win == 1:
             if db_connection:
                 db_connection.close()
-            print("主窗口关闭")
             event.accept()
         else:
             reply = QMessageBox.question(self, '提示',
@@ -1115,22 +1740,23 @@ class MainWindow(QMainWindow):
             if reply == QMessageBox.Yes:
                 if hasattr(self, "book_window"):
                     (self.book_window.result_textbox
-                     .cellClicked.disconnect(self.handle_cell_clicked))
+                     .cellClicked.disconnect(self.book_window
+                                             .handle_cell_clicked))
                     print("与图书管理窗口链接断开")
                 if hasattr(self, "shelf_window"):
                     (self.shelf_window.result_textbox
-                     .cellClicked.disconnect(self.handle_cell_clicked))
+                     .cellClicked.disconnect(self.shelf_window
+                                             .handle_cell_clicked))
                     print("与书架管理窗口链接断开")
                 if hasattr(self, "reader_window"):
                     (self.reader_window.result_textbox
-                     .cellClicked.disconnect(self.handle_cell_clicked))
+                     .cellClicked.disconnect(self.reader_window
+                                             .handle_cell_clicked))
                     print("与读者管理窗口链接断开")
                 if db_connection:
                     db_connection.close()
-                print("主窗口关闭")
                 event.accept()
             else:
-                print("取消关闭主窗口")
                 event.ignore()
 
 
