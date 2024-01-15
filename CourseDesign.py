@@ -41,7 +41,7 @@ manager_att_r = {v: k for k, v in manager_att.items()}
 
 reader_att = {
     "RNO": "读者号",
-    "RNAME": "性名",
+    "RNAME": "姓名",
     "RSEX": "性别",
     "RBIRTH": "出生日期",
     "RID": "身份证号",
@@ -58,6 +58,18 @@ shell_att = {
     "WNO": "管理员工号"
 }
 shell_att_r = {v: k for k, v in shell_att.items()}
+
+match_att = {
+    "相关匹配": "LIKE \'%{}%\'",
+    "前字匹配": "LIKE \'%{}\'",
+    "后字匹配": "LIKE \'{}%\'",
+    "绝对匹配": "=\'{}\'"
+}
+
+sort_att = {
+    "升序": "ASC",
+    "降序": "DESC"
+}
 
 
 class MySQL:
@@ -230,6 +242,7 @@ class BookManagementWindow(QDialog):
         self.regex_property_combo.addItem("书号")
         self.regex_property_combo.addItem("作者")
         self.regex_property_combo.addItem("出版社")
+        self.regex_property_combo.addItem("定价")
         self.regex_property_combo.addItem("存放书架号")
         self.regex_property_combo.addItem("状态")
         self.regex_property_combo.addItem("借阅读者号")
@@ -238,6 +251,9 @@ class BookManagementWindow(QDialog):
         self.query_button = QLabel("点击查询:", self)
         self.query_button.setGeometry(530, 601, 70, 30)
         self.query_button = QPushButton("查询", self)
+        self.query_button.setStyleSheet("color: white;\
+                                         background-color: lightblue;\
+                                         font-weight: bold")
         self.query_button.setCursor(Qt.PointingHandCursor)
         self.query_button.setGeometry(530, 632, 70, 30)
         self.query_button.clicked.connect(self.handle_query)
@@ -245,6 +261,9 @@ class BookManagementWindow(QDialog):
         self.add_button = QLabel("点击增加:", self)
         self.add_button.setGeometry(602, 601, 70, 30)
         self.add_button = QPushButton("增加", self)
+        self.add_button.setStyleSheet("color: green;\
+                                         background-color: lightblue;\
+                                         font-weight: bold")
         self.add_button.setCursor(Qt.PointingHandCursor)
         self.add_button.setGeometry(602, 632, 70, 30)
         self.add_button.clicked.connect(self.handle_query)
@@ -252,6 +271,9 @@ class BookManagementWindow(QDialog):
         self.change_button = QLabel("点击修改:", self)
         self.change_button.setGeometry(674, 601, 70, 30)
         self.change_button = QPushButton("修改", self)
+        self.change_button.setStyleSheet("color: yellow;\
+                                         background-color: lightblue;\
+                                         font-weight: bold")
         self.change_button.setCursor(Qt.PointingHandCursor)
         self.change_button.setGeometry(674, 632, 70, 30)
         self.change_button.clicked.connect(self.handle_query)
@@ -259,6 +281,9 @@ class BookManagementWindow(QDialog):
         self.delete_button = QLabel("点击删除:", self)
         self.delete_button.setGeometry(746, 601, 70, 30)
         self.delete_button = QPushButton("删除", self)
+        self.delete_button.setStyleSheet("color: red;\
+                                         background-color: lightblue;\
+                                         font-weight: bold")
         self.delete_button.setCursor(Qt.PointingHandCursor)
         self.delete_button.setGeometry(746, 632, 70, 30)
         self.delete_button.clicked.connect(self.handle_query)
@@ -266,6 +291,9 @@ class BookManagementWindow(QDialog):
         self.borrow_button = QLabel("点击借阅:", self)
         self.borrow_button.setGeometry(818, 601, 70, 30)
         self.borrow_button = QPushButton("借阅", self)
+        self.borrow_button.setStyleSheet("color: blue;\
+                                         background-color: lightblue;\
+                                         font-weight: bold")
         self.borrow_button.setCursor(Qt.PointingHandCursor)
         self.borrow_button.setGeometry(818, 632, 70, 30)
         self.borrow_button.clicked.connect(self.handle_query)
@@ -273,10 +301,18 @@ class BookManagementWindow(QDialog):
         self.handle_query()
 
     def handle_query(self):
-        # query_text = self.input_textbox.text()
-        # result = (db_connection.execute_query("SELECT * FROM reader WHERE\
-        #     RNO LIKE '{}%'".format(query_text)))
-        result = (db_connection.execute_query("SELECT * FROM books"))
+        key_text = self.input_textbox.text()
+        sort_text = self.sort_order_combo.currentText()
+        sort_property = self.sort_property_combo.currentText()
+        match_text = self.match_type_combo.currentText()
+        regex_property = self.regex_property_combo.currentText()
+        query_text = ("SELECT * FROM books WHERE {0} {1} ORDER BY {2} {3}"
+                      .format(books_att_r[regex_property],
+                              match_att[match_text],
+                              books_att_r[sort_property], sort_att[sort_text]))
+        query_text = query_text.format(key_text)
+        print(query_text)
+        result = (db_connection.execute_query(query_text))
         # 设置表格的行数和列数
         self.result_textbox.clearContents()
         if result:
@@ -290,6 +326,7 @@ class BookManagementWindow(QDialog):
             self.result_textbox.setHorizontalHeaderLabels(column_names)
 
             # 填充表格数据
+            self.result_textbox.horizontalHeader().setVisible(True)
             for i, row in enumerate(result):
                 for j, item in enumerate(row):
                     table_item = QTableWidgetItem(str(item))
@@ -299,6 +336,13 @@ class BookManagementWindow(QDialog):
                                                 .NoEditTriggers)
             self.result_textbox.resizeColumnsToContents()
             self.result_textbox.resizeRowsToContents()
+        else:
+            # 清空表格数据并显示查询结果为空的提示消息
+            self.result_textbox.clearContents()
+            self.result_textbox.setRowCount(1)
+            self.result_textbox.setColumnCount(1)
+            self.result_textbox.horizontalHeader().setVisible(False)
+            self.result_textbox.setItem(0, 0, QTableWidgetItem("查询结果为空"))
 
 
 class ShelfManagementWindow(QDialog):
@@ -354,6 +398,9 @@ class ShelfManagementWindow(QDialog):
         self.query_button = QLabel("点击查询:", self)
         self.query_button.setGeometry(592, 601, 70, 30)
         self.query_button = QPushButton("查询", self)
+        self.query_button.setStyleSheet("color: white;\
+                                         background-color: lightblue;\
+                                         font-weight: bold")
         self.query_button.setCursor(Qt.PointingHandCursor)
         self.query_button.setGeometry(592, 632, 70, 30)
         self.query_button.clicked.connect(self.handle_query)
@@ -361,6 +408,9 @@ class ShelfManagementWindow(QDialog):
         self.add_button = QLabel("点击增加:", self)
         self.add_button.setGeometry(666, 601, 70, 30)
         self.add_button = QPushButton("增加", self)
+        self.add_button.setStyleSheet("color: green;\
+                                         background-color: lightblue;\
+                                         font-weight: bold")
         self.add_button.setCursor(Qt.PointingHandCursor)
         self.add_button.setGeometry(666, 632, 70, 30)
         self.add_button.clicked.connect(self.handle_query)
@@ -368,6 +418,9 @@ class ShelfManagementWindow(QDialog):
         self.change_button = QLabel("点击修改:", self)
         self.change_button.setGeometry(740, 601, 70, 30)
         self.change_button = QPushButton("修改", self)
+        self.change_button.setStyleSheet("color: yellow;\
+                                         background-color: lightblue;\
+                                         font-weight: bold")
         self.change_button.setCursor(Qt.PointingHandCursor)
         self.change_button.setGeometry(740, 632, 70, 30)
         self.change_button.clicked.connect(self.handle_query)
@@ -375,6 +428,9 @@ class ShelfManagementWindow(QDialog):
         self.delete_button = QLabel("点击删除:", self)
         self.delete_button.setGeometry(814, 601, 70, 30)
         self.delete_button = QPushButton("删除", self)
+        self.delete_button.setStyleSheet("color: red;\
+                                         background-color: lightblue;\
+                                         font-weight: bold")
         self.delete_button.setCursor(Qt.PointingHandCursor)
         self.delete_button.setGeometry(814, 632, 70, 30)
         self.delete_button.clicked.connect(self.handle_query)
@@ -382,9 +438,9 @@ class ShelfManagementWindow(QDialog):
         self.handle_query()
 
     def handle_query(self):
-        # query_text = self.input_textbox.text()
+        # key_text = self.input_textbox.text()
         # result = (db_connection.execute_query("SELECT * FROM reader WHERE\
-        #     RNO LIKE '{}%'".format(query_text)))
+        #     RNO LIKE '{}%'".format(key_text)))
         result = (db_connection.execute_query("SELECT * FROM shell"))
         # 设置表格的行数和列数
         self.result_textbox.clearContents()
@@ -467,6 +523,9 @@ class ReaderManagementWindow(QDialog):
         self.query_button = QLabel("点击查询:", self)
         self.query_button.setGeometry(592, 601, 70, 30)
         self.query_button = QPushButton("查询", self)
+        self.query_button.setStyleSheet("color: white;\
+                                         background-color: lightblue;\
+                                         font-weight: bold")
         self.query_button.setCursor(Qt.PointingHandCursor)
         self.query_button.setGeometry(592, 632, 70, 30)
         self.query_button.clicked.connect(self.handle_query)
@@ -474,6 +533,9 @@ class ReaderManagementWindow(QDialog):
         self.add_button = QLabel("点击增加:", self)
         self.add_button.setGeometry(666, 601, 70, 30)
         self.add_button = QPushButton("增加", self)
+        self.add_button.setStyleSheet("color: green;\
+                                         background-color: lightblue;\
+                                         font-weight: bold")
         self.add_button.setCursor(Qt.PointingHandCursor)
         self.add_button.setGeometry(666, 632, 70, 30)
         self.add_button.clicked.connect(self.handle_query)
@@ -481,6 +543,9 @@ class ReaderManagementWindow(QDialog):
         self.change_button = QLabel("点击修改:", self)
         self.change_button.setGeometry(740, 601, 70, 30)
         self.change_button = QPushButton("修改", self)
+        self.change_button.setStyleSheet("color: yellow;\
+                                         background-color: lightblue;\
+                                         font-weight: bold")
         self.change_button.setCursor(Qt.PointingHandCursor)
         self.change_button.setGeometry(740, 632, 70, 30)
         self.change_button.clicked.connect(self.handle_query)
@@ -488,6 +553,9 @@ class ReaderManagementWindow(QDialog):
         self.delete_button = QLabel("点击删除:", self)
         self.delete_button.setGeometry(814, 601, 70, 30)
         self.delete_button = QPushButton("删除", self)
+        self.delete_button.setStyleSheet("color: red;\
+                                         background-color: lightblue;\
+                                         font-weight: bold")
         self.delete_button.setCursor(Qt.PointingHandCursor)
         self.delete_button.setGeometry(814, 632, 70, 30)
         self.delete_button.clicked.connect(self.handle_query)
@@ -495,9 +563,9 @@ class ReaderManagementWindow(QDialog):
         self.handle_query()
 
     def handle_query(self):
-        # query_text = self.input_textbox.text()
+        # key_text = self.input_textbox.text()
         # result = (db_connection.execute_query("SELECT * FROM reader WHERE\
-        #     RNO LIKE '{}%'".format(query_text)))
+        #     RNO LIKE '{}%'".format(key_text)))
         result = (db_connection.execute_query("SELECT * FROM reader"))
         # 设置表格的行数和列数
         self.result_textbox.clearContents()
