@@ -4,10 +4,11 @@ from PyQt5.QtWidgets import (QDialog, QLabel, QCheckBox, QHBoxLayout,
                              QMainWindow, QMessageBox, QTableWidgetItem,
                              QScrollArea, QTextEdit, QAction, QMenu,
                              QFileDialog, QComboBox, QAbstractItemView)
-from PyQt5.QtCore import Qt, QDateTime, QSize, QRect, QUrl
+from PyQt5.QtCore import Qt, QDateTime, QSize, QRect, QUrl, pyqtSlot
 from PyQt5.QtGui import (QPixmap, QColor, QPalette, QFont,
                          QMovie, QMouseEvent, QCursor, QDesktopServices)
 import sys
+import os
 import pymysql
 
 # 全局变量
@@ -115,6 +116,7 @@ class MySQL:
 class LoginWindow(QDialog):
     def __init__(self):
         super().__init__()
+        print("当前位于管理员登录窗口界面")
         self.setWindowTitle("管理员登录界面")
         screen = app.desktop().screenGeometry()
         x = 300
@@ -154,12 +156,14 @@ class LoginWindow(QDialog):
         self.setLayout(layout)
 
     def toggle_password_visibility(self, state):
+        print("点击了显示密码")
         if state == Qt.Checked:
             self.text_password.setEchoMode(QLineEdit.Normal)
         else:
             self.text_password.setEchoMode(QLineEdit.Password)
 
     def login(self):
+        print("点击了登录按钮")
         username = self.text_username.text()
         password = self.text_password.text()
         username = "hlxcg"
@@ -171,34 +175,42 @@ class LoginWindow(QDialog):
 
         if username == "" or password == "":
             QMessageBox.critical(None, "登录失败", "账号或密码不能为空")
+            print("登录失败, 账号或密码不能为空")
         elif db.connect():
+            print("登陆成功, 将前往主窗口")
             global db_connection
             db_connection = db
             self.accept()  # 登录成功，关闭登录界面
         else:
             QMessageBox.critical(None, "登录失败", "账号或密码错误")
+            print("登录失败, 账号或密码错误")
 
     def closeEvent(self, event):
+        print("点击了退出管理员登录界面")
         reply = QMessageBox.question(self, '提示', '确定要退出吗?',
                                      QMessageBox.Yes | QMessageBox.No,
                                      QMessageBox.No)
         if reply == QMessageBox.Yes:
+            print("退出登录窗口并退出程序, 谢谢使用")
             event.accept()
             exit()
         else:
+            print("取消退出管理员登录界面")
             event.ignore()
 
 
 class BookManagementWindow(QDialog):
-    def __init__(self):
+    def __init__(self, main_window):
         super().__init__()
+        self.main_win = main_window
         self.setWindowTitle("图书管理")
         self.setGeometry(0, 0, 888, 690)
 
         self.result_textbox = QTableWidget(self)
         self.result_textbox.setGeometry(2, 0, 884, 600)
-        self.result_textbox.setRowCount(0)
-        self.result_textbox.setColumnCount(0)
+        self.result_textbox.setSelectionBehavior(QAbstractItemView.SelectRows)
+        print("与图书管理窗口建立链接")
+        self.result_textbox.cellClicked.connect(self.handle_cell_clicked)
 
         self.label_input = QLabel("请输入关键文字:", self)
         self.label_input.setGeometry(2, 601, 138, 30)
@@ -301,6 +313,8 @@ class BookManagementWindow(QDialog):
         self.handle_query()
 
     def handle_query(self):
+        print("点击了{}按钮".format(self.sender().text()))
+        self.main_win.renew_bs()
         key_text = self.input_textbox.text()
         sort_text = self.sort_order_combo.currentText()
         sort_property = self.sort_property_combo.currentText()
@@ -344,17 +358,31 @@ class BookManagementWindow(QDialog):
             self.result_textbox.horizontalHeader().setVisible(False)
             self.result_textbox.setItem(0, 0, QTableWidgetItem("查询结果为空"))
 
+    def handle_cell_clicked(self, row, column):
+        selected_ranges = self.result_textbox.selectedRanges()
+        if len(selected_ranges) > 0:
+            selected_rows = []
+            selected_range = selected_ranges[0]  # 只取第一个选中区域
+            selected_row = selected_range.topRow()
+            selected_rows.append(selected_row)
+            id = self.result_textbox.item(selected_rows[0], 0).text()
+            print("选中了元组:")
+            print(selected_rows[0])
+            print("该元组唯一标识符:{}".format(id))
+
 
 class ShelfManagementWindow(QDialog):
-    def __init__(self):
+    def __init__(self, main_window):
         super().__init__()
+        self.main_win = main_window
         self.setWindowTitle("书架管理")
         self.setGeometry(0, 0, 888, 690)
 
         self.result_textbox = QTableWidget(self)
         self.result_textbox.setGeometry(2, 0, 884, 600)
-        self.result_textbox.setRowCount(0)
-        self.result_textbox.setColumnCount(0)
+        self.result_textbox.setSelectionBehavior(QAbstractItemView.SelectRows)
+        print("与书架管理窗口建立链接")
+        self.result_textbox.cellClicked.connect(self.handle_cell_clicked)
 
         self.label_input = QLabel("请输入关键文字:", self)
         self.label_input.setGeometry(2, 601, 198, 30)
@@ -438,10 +466,20 @@ class ShelfManagementWindow(QDialog):
         self.handle_query()
 
     def handle_query(self):
-        # key_text = self.input_textbox.text()
-        # result = (db_connection.execute_query("SELECT * FROM reader WHERE\
-        #     RNO LIKE '{}%'".format(key_text)))
-        result = (db_connection.execute_query("SELECT * FROM shell"))
+        print("点击了{}按钮".format(self.sender().text()))
+        self.main_win.renew_bs()
+        key_text = self.input_textbox.text()
+        sort_text = self.sort_order_combo.currentText()
+        sort_property = self.sort_property_combo.currentText()
+        match_text = self.match_type_combo.currentText()
+        regex_property = self.regex_property_combo.currentText()
+        query_text = ("SELECT * FROM shell WHERE {0} {1} ORDER BY {2} {3}"
+                      .format(shell_att_r[regex_property],
+                              match_att[match_text],
+                              shell_att_r[sort_property], sort_att[sort_text]))
+        query_text = query_text.format(key_text)
+        print(query_text)
+        result = (db_connection.execute_query(query_text))
         # 设置表格的行数和列数
         self.result_textbox.clearContents()
         if result:
@@ -455,6 +493,7 @@ class ShelfManagementWindow(QDialog):
             self.result_textbox.setHorizontalHeaderLabels(column_names)
 
             # 填充表格数据
+            self.result_textbox.horizontalHeader().setVisible(True)
             for i, row in enumerate(result):
                 for j, item in enumerate(row):
                     table_item = QTableWidgetItem(str(item))
@@ -464,18 +503,39 @@ class ShelfManagementWindow(QDialog):
                                                 .NoEditTriggers)
             self.result_textbox.resizeColumnsToContents()
             self.result_textbox.resizeRowsToContents()
+        else:
+            # 清空表格数据并显示查询结果为空的提示消息
+            self.result_textbox.clearContents()
+            self.result_textbox.setRowCount(1)
+            self.result_textbox.setColumnCount(1)
+            self.result_textbox.horizontalHeader().setVisible(False)
+            self.result_textbox.setItem(0, 0, QTableWidgetItem("查询结果为空"))
+
+    def handle_cell_clicked(self, row, column):
+        selected_ranges = self.result_textbox.selectedRanges()
+        if len(selected_ranges) > 0:
+            selected_rows = []
+            selected_range = selected_ranges[0]  # 只取第一个选中区域
+            selected_row = selected_range.topRow()
+            selected_rows.append(selected_row)
+            id = self.result_textbox.item(selected_rows[0], 0).text()
+            print("选中了元组:")
+            print(selected_rows[0])
+            print("该元组唯一标识符:{}".format(id))
 
 
 class ReaderManagementWindow(QDialog):
-    def __init__(self):
+    def __init__(self, main_window):
         super().__init__()
+        self.main_win = main_window
         self.setWindowTitle("读者管理")
         self.setGeometry(0, 0, 888, 690)
 
         self.result_textbox = QTableWidget(self)
         self.result_textbox.setGeometry(2, 0, 884, 600)
-        self.result_textbox.setRowCount(0)
-        self.result_textbox.setColumnCount(0)
+        self.result_textbox.setSelectionBehavior(QAbstractItemView.SelectRows)
+        print("与读者管理窗口建立链接")
+        self.result_textbox.cellClicked.connect(self.handle_cell_clicked)
 
         self.label_input = QLabel("请输入关键文字:", self)
         self.label_input.setGeometry(2, 601, 198, 30)
@@ -563,10 +623,21 @@ class ReaderManagementWindow(QDialog):
         self.handle_query()
 
     def handle_query(self):
-        # key_text = self.input_textbox.text()
-        # result = (db_connection.execute_query("SELECT * FROM reader WHERE\
-        #     RNO LIKE '{}%'".format(key_text)))
-        result = (db_connection.execute_query("SELECT * FROM reader"))
+        print("点击了{}按钮".format(self.sender().text()))
+        self.main_win.renew_bs()
+        key_text = self.input_textbox.text()
+        sort_text = self.sort_order_combo.currentText()
+        sort_property = self.sort_property_combo.currentText()
+        match_text = self.match_type_combo.currentText()
+        regex_property = self.regex_property_combo.currentText()
+        query_text = ("SELECT * FROM reader WHERE {0} {1} ORDER BY {2} {3}"
+                      .format(reader_att_r[regex_property],
+                              match_att[match_text],
+                              reader_att_r[sort_property],
+                              sort_att[sort_text]))
+        query_text = query_text.format(key_text)
+        print(query_text)
+        result = (db_connection.execute_query(query_text))
         # 设置表格的行数和列数
         self.result_textbox.clearContents()
         if result:
@@ -580,6 +651,7 @@ class ReaderManagementWindow(QDialog):
             self.result_textbox.setHorizontalHeaderLabels(column_names)
 
             # 填充表格数据
+            self.result_textbox.horizontalHeader().setVisible(True)
             for i, row in enumerate(result):
                 for j, item in enumerate(row):
                     table_item = QTableWidgetItem(str(item))
@@ -589,11 +661,31 @@ class ReaderManagementWindow(QDialog):
                                                 .NoEditTriggers)
             self.result_textbox.resizeColumnsToContents()
             self.result_textbox.resizeRowsToContents()
+        else:
+            # 清空表格数据并显示查询结果为空的提示消息
+            self.result_textbox.clearContents()
+            self.result_textbox.setRowCount(1)
+            self.result_textbox.setColumnCount(1)
+            self.result_textbox.horizontalHeader().setVisible(False)
+            self.result_textbox.setItem(0, 0, QTableWidgetItem("查询结果为空"))
+
+    def handle_cell_clicked(self, row, column):
+        selected_ranges = self.result_textbox.selectedRanges()
+        if len(selected_ranges) > 0:
+            selected_rows = []
+            selected_range = selected_ranges[0]  # 只取第一个选中区域
+            selected_row = selected_range.topRow()
+            selected_rows.append(selected_row)
+            id = self.result_textbox.item(selected_rows[0], 0).text()
+            print("选中了元组:")
+            print(selected_rows[0])
+            print("该元组唯一标识符:{}".format(id))
 
 
 class HelpDialog(QDialog):
     def __init__(self, content):
         super().__init__()
+        print("当前是帮助页面")
 
         self.setWindowTitle("帮助")
         screen = app.desktop().screenGeometry()
@@ -631,6 +723,8 @@ class MainWindow(QMainWindow):
         self.login_window.exec_()
 
     def on_login_accepted(self):
+        print("当前位于主窗口")
+        # 清空账号和密码
         self.login_window.text_username.setText('')
         self.login_window.text_password.setText('')
         # 系统主窗口名称
@@ -651,6 +745,7 @@ class MainWindow(QMainWindow):
             UNM=\"{}\"".format(admin_name))
         self.usrname = res[0][0]
         label_lg = QLabel(u"当前登录,管理员:{0}".format(self.usrname), self)
+        print("当前登录管理员是{0}".format(self.usrname))
         label_lg.setGeometry(self.width() - 290, 2, 190, 20)
         label_lg.setStyleSheet("color: red; background-color: transparent;")
 
@@ -723,11 +818,14 @@ class MainWindow(QMainWindow):
         if event.button() == Qt.RightButton:
             pos = event.pos()
             if self.is_in_custom_area(pos):
+                print("在图书情况处右击")
                 self.show_context_menu_rf(pos)
         else:
             super().mousePressEvent(event)
 
+    @pyqtSlot()
     def renew_bs(self):
+        print("已刷新")
         # 修改图书情况标签的文本内容、字体和大小
         res_bk = db_connection.execute_query("SELECT COUNT(*) FROM books")
         res_bbk = db_connection.execute_query("SELECT COUNT(*) FROM books\
@@ -804,24 +902,29 @@ class MainWindow(QMainWindow):
 
     def show_context_menu_cp(self, pos):
         menu = QMenu(self)
+        print("在自定义图片处右击")
         action_change_image = menu.addAction("切换图片")
         action_change_image.triggered.connect(self.change_image)
         menu.exec_(self.image_label_ys.mapToGlobal(pos))
 
     def change_image(self):
+        print("选择替换图片")
         file_dialog = QFileDialog()
+        file_dialog.setDirectory("resource/images")
         file_path, _ = (file_dialog
                         .getOpenFileName(self, "选择图片", "",
                                          "Images (*.png *.xpm *.jpg *.gif)"))
         if file_path:
+            relative_path = os.path.relpath(file_path)
             with open('resource/picture_path.txt', 'w') as f:
-                f.write(file_path)
-            movie = QMovie(file_path)
+                f.write(relative_path)
+            movie = QMovie(relative_path)
             movie.setScaledSize(QSize(294, 294))
             self.image_label_ys.setMovie(movie)
             movie.start()
 
     def handle_switch_account(self):
+        print("点击了切换账号按钮")
         reply = QMessageBox.question(self, '提示', '确定要切换账号吗？',
                                      QMessageBox.Yes | QMessageBox.No,
                                      QMessageBox.No)
@@ -831,6 +934,8 @@ class MainWindow(QMainWindow):
             self.close()
             switch_win = None
             main_window = MainWindow()
+        else:
+            print("取消切换账号")
 
     def create_footer(self):
         line_h = QFrame(self)
@@ -895,6 +1000,7 @@ class MainWindow(QMainWindow):
         button.setStyleSheet("QToolButton { font-weight: normal; }")
 
     def show_book_management_window(self):
+        print("点击了图书管理按钮")
         if self.button_book.font().weight() != QFont.Bold:
             self.image_label_main.hide()
             if hasattr(self, "shelf_window"):
@@ -904,7 +1010,7 @@ class MainWindow(QMainWindow):
             self.set_button_normal(self.button_shelf)
             self.set_button_normal(self.button_reader)
             self.set_button_text_bold(self.button_book)
-            self.book_window = BookManagementWindow()
+            self.book_window = BookManagementWindow(self)
             self.book_window.setParent(self.container)  # 将子窗口设置为容器部件的子部件
             self.book_window.show()
         else:
@@ -913,6 +1019,7 @@ class MainWindow(QMainWindow):
             self.image_label_main.show()
 
     def show_shelf_management_window(self):
+        print("点击了书架管理按钮")
         if self.button_shelf.font().weight() != QFont.Bold:
             self.image_label_main.hide()
             if hasattr(self, "book_window"):
@@ -922,7 +1029,7 @@ class MainWindow(QMainWindow):
             self.set_button_normal(self.button_book)
             self.set_button_normal(self.button_reader)
             self.set_button_text_bold(self.button_shelf)
-            self.shelf_window = ShelfManagementWindow()
+            self.shelf_window = ShelfManagementWindow(self)
             self.shelf_window.setParent(self.container)  # 将子窗口设置为容器部件的子部件
             self.shelf_window.show()
         else:
@@ -931,6 +1038,7 @@ class MainWindow(QMainWindow):
             self.image_label_main.show()
 
     def show_reader_management_window(self):
+        print("点击了读者管理按钮")
         if self.button_reader.font().weight() != QFont.Bold:
             self.image_label_main.hide()
             if hasattr(self, "book_window"):
@@ -940,7 +1048,7 @@ class MainWindow(QMainWindow):
             self.set_button_normal(self.button_book)
             self.set_button_normal(self.button_shelf)
             self.set_button_text_bold(self.button_reader)
-            self.reader_window = ReaderManagementWindow()
+            self.reader_window = ReaderManagementWindow(self)
             self.reader_window.setParent(self.container)  # 将子窗口设置为容器部件的子部件
             self.reader_window.show()
         else:
@@ -972,17 +1080,21 @@ class MainWindow(QMainWindow):
         self.about_label.setGeometry(890, 659, 32, 30)
 
     def open_website(self, event):
+        print("点击关于按钮,将前往github")
         reply = QMessageBox.question(self, '提示',
                                      '源码给出仅供参考学习,是否前往?', QMessageBox
                                      .Yes | QMessageBox.No, QMessageBox.No)
         if reply == QMessageBox.Yes:
             url = QUrl("https://github.com/hlxcg/sql_design")
             QDesktopServices.openUrl(url)
+            print("正在前往github")
             event.accept()
         else:
+            print("取消前往github")
             event.ignore()
 
     def show_help(self, event):
+        print("点击了帮助按钮")
         with open("resource/help.txt", encoding="utf-8") as f:
             help_text = f.read()
 
@@ -990,19 +1102,35 @@ class MainWindow(QMainWindow):
         dialog.exec_()
 
     def closeEvent(self, event):
+        print("点击了主窗口关闭")
         if switch_win == 1:
             if db_connection:
                 db_connection.close()
+            print("主窗口关闭")
             event.accept()
         else:
             reply = QMessageBox.question(self, '提示',
                                          '确定要退出吗?', QMessageBox
                                          .Yes | QMessageBox.No, QMessageBox.No)
             if reply == QMessageBox.Yes:
+                if hasattr(self, "book_window"):
+                    (self.book_window.result_textbox
+                     .cellClicked.disconnect(self.handle_cell_clicked))
+                    print("与图书管理窗口链接断开")
+                if hasattr(self, "shelf_window"):
+                    (self.shelf_window.result_textbox
+                     .cellClicked.disconnect(self.handle_cell_clicked))
+                    print("与书架管理窗口链接断开")
+                if hasattr(self, "reader_window"):
+                    (self.reader_window.result_textbox
+                     .cellClicked.disconnect(self.handle_cell_clicked))
+                    print("与读者管理窗口链接断开")
                 if db_connection:
                     db_connection.close()
+                print("主窗口关闭")
                 event.accept()
             else:
+                print("取消关闭主窗口")
                 event.ignore()
 
 
