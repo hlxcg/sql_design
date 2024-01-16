@@ -166,8 +166,6 @@ class LoginWindow(QDialog):
     def login(self):
         username = self.text_username.text()
         password = self.text_password.text()
-        # username = "hlxcg"
-        # password = "Ccyisaboy229@"
         db = MySQL(host="36.139.236.110",
                    user=username,
                    password=password,
