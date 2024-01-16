@@ -104,6 +104,7 @@ class MySQL:
             result = self.cursor.fetchall()
             return result
         except pymysql.Error as e:
+            self.execute_query("ROLLBACK")
             QMessageBox.critical(None, "错误", f"数据库语句执行出错:{e}")
             print(f"数据库语句执行出错:{e}")
 
@@ -273,10 +274,6 @@ class EditBookDialog(QDialog):
         self.input6 = QLineEdit(self)
         self.label7 = QLabel("存放书架号:", self)
         self.input7 = QLineEdit(self)
-        self.label8 = QLabel("状态:", self)
-        self.input8 = QLineEdit(self)
-        self.label9 = QLabel("借阅读者号:", self)
-        self.input9 = QLineEdit(self)
 
         self.button = QPushButton("确定", self)
         self.button.clicked.connect(self.accept)
@@ -300,10 +297,6 @@ class EditBookDialog(QDialog):
         layout.addWidget(self.input6)
         layout.addWidget(self.label7)
         layout.addWidget(self.input7)
-        layout.addWidget(self.label8)
-        layout.addWidget(self.input8)
-        layout.addWidget(self.label9)
-        layout.addWidget(self.input9)
         layout.addWidget(self.button)
 
         self.setLayout(layout)
@@ -320,13 +313,11 @@ class EditBookDialog(QDialog):
         self.input5.setText(str(values[4]))
         self.input6.setText(str(values[5]))
         self.input7.setText(str(values[6]))
-        self.input8.setText(str(values[7]))
-        self.input9.setText(str(values[8]))
 
     def get_data(self):
         return (self.input1.text(), self.input2.text(), self.input3.text(),
                 self.input4.text(), self.input5.text(), self.input6.text(),
-                self.input7.text(), self.input7.text(), self.input9.text())
+                self.input7.text())
 
 
 class BookManagementWindow(QDialog):
@@ -613,18 +604,15 @@ class BookManagementWindow(QDialog):
                     books WHERE BNO=\'{}\'".format(self.choice_id))[0])
                 if dialog.exec_() == QDialog.Accepted:
                     change_text = ("UPDATE books SET BNO=\'{0}\',ISBN=\'{1}\',\
-                        BNAME=\'{2}\',WRITER=\'{3}\',PUB=\'{4}\',PRICE=\'{5}\',CNO=\'{6}\',\
-                            STATE=\'{7}\',RNO=\'{8}\' WHERE BNO=\'{9}\'\
-                                ".format(dialog.get_data()[0],
-                                         dialog.get_data()[1],
-                                         dialog.get_data()[2],
-                                         dialog.get_data()[3],
-                                         dialog.get_data()[4],
-                                         dialog.get_data()[5],
-                                         dialog.get_data()[6],
-                                         dialog.get_data()[7],
-                                         dialog.get_data()[8],
-                                         self.choice_id))
+                                   BNAME=\'{2}\',WRITER=\'{3}\',PUB=\'{4}\',PRICE=\'{5}\',CNO=\'{6}\'\
+                            WHERE BNO=\'{7}\'".format(dialog.get_data()[0],
+                                                      dialog.get_data()[1],
+                                                      dialog.get_data()[2],
+                                                      dialog.get_data()[3],
+                                                      dialog.get_data()[4],
+                                                      dialog.get_data()[5],
+                                                      dialog.get_data()[6],
+                                                      self.choice_id))
                     print(change_text)
                     db_connection.execute_query(change_text)
                     db_connection.execute_query("COMMIT")
@@ -1022,10 +1010,8 @@ class EditReaderDialog(QDialog):
         self.input5 = QLineEdit(self)
         self.label6 = QLabel("电话:", self)
         self.input6 = QLineEdit(self)
-        self.label7 = QLabel("已借本数:", self)
+        self.label7 = QLabel("限借本数:", self)
         self.input7 = QLineEdit(self)
-        self.label8 = QLabel("限借本数:", self)
-        self.input8 = QLineEdit(self)
 
         self.button = QPushButton("确定", self)
         self.button.clicked.connect(self.accept)
@@ -1049,8 +1035,6 @@ class EditReaderDialog(QDialog):
         layout.addWidget(self.input6)
         layout.addWidget(self.label7)
         layout.addWidget(self.input7)
-        layout.addWidget(self.label8)
-        layout.addWidget(self.input8)
         layout.addWidget(self.button)
 
         self.setLayout(layout)
@@ -1067,12 +1051,11 @@ class EditReaderDialog(QDialog):
         self.input5.setText(str(values[4]))
         self.input6.setText(str(values[5]))
         self.input7.setText(str(values[6]))
-        self.input8.setText(str(values[7]))
 
     def get_data(self):
         return (self.input1.text(), self.input2.text(), self.input3.text(),
                 self.input4.text(), self.input5.text(), self.input6.text(),
-                self.input7.text(), self.input7.text())
+                self.input7.text())
 
 
 class ReaderManagementWindow(QDialog):
@@ -1263,8 +1246,8 @@ class ReaderManagementWindow(QDialog):
                     reader WHERE RNO=\'{}\'".format(self.choice_id))[0])
                 if dialog.exec_() == QDialog.Accepted:
                     change_text = ("UPDATE reader SET RNO=\'{0}\',RNAME=\
-                        \'{1}\',RSEX=\'{2}\',RBIRTH=\'{3}\',RID=\'{4}\',RTEL=\'{5}\',BD=\'{6}\',\
-                            LIM=\'{7}\' WHERE RNO=\'{8}\'\
+                        \'{1}\',RSEX=\'{2}\',RBIRTH=\'{3}\',RID=\'{4}\',RTEL=\'{5}\',LIM=\'{6}\'\
+                            WHERE RNO=\'{7}\'\
                                 ".format(dialog.get_data()[0],
                                          dialog.get_data()[1],
                                          dialog.get_data()[2],
@@ -1272,7 +1255,6 @@ class ReaderManagementWindow(QDialog):
                                          dialog.get_data()[4],
                                          dialog.get_data()[5],
                                          dialog.get_data()[6],
-                                         dialog.get_data()[7],
                                          self.choice_id))
                     print(change_text)
                     db_connection.execute_query(change_text)

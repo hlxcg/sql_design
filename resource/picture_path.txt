@@ -1,1 +1,1 @@
-resource\images\15.gif
+resource\images\24.gif
